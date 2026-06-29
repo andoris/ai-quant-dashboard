@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 算力链 · 行情看板</title>
+<style>
+  :root { --up:#d03b3b; --down:#0ca30c; --flat:#888; --bg:#f7f6f2; --card:#fff; --bd:#e1e0d9; --tx:#1a1a19; --mut:#5f5e5a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--tx); }
+  header { padding:16px 18px 8px; }
+  h1 { font-size:19px; margin:0 0 2px; font-weight:600; }
+  .meta { font-size:12px; color:var(--mut); }
+  .tabs { display:flex; gap:6px; padding:8px 14px 0; flex-wrap:wrap; border-bottom:1px solid var(--bd); }
+  .tab { font-size:13.5px; padding:7px 14px; border:none; background:none; cursor:pointer; color:var(--mut); border-bottom:2px solid transparent; }
+  .tab.on { color:var(--tx); border-bottom-color:#0F6E56; font-weight:600; }
+  main { padding:14px 14px 40px; max-width:1100px; margin:0 auto; }
+  .sec { display:none; } .sec.on { display:block; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:18px; }
+  .icard { background:var(--card); border:0.5px solid var(--bd); border-radius:12px; padding:12px 14px; }
+  .icard .nm { font-size:13px; color:var(--mut); }
+  .icard .pt { font-size:20px; font-weight:600; margin-top:3px; }
+  .icard .ch { font-size:13px; font-weight:600; margin-top:2px; }
+  h2 { font-size:15px; margin:6px 0 10px; font-weight:600; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .controls button, select, input { font-size:12.5px; padding:6px 10px; border:0.5px solid #c3c2b7; border-radius:8px; background:#fff; color:var(--tx); cursor:pointer; }
+  .controls button.on { background:#0F6E56; color:#fff; border-color:#0F6E56; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; background:var(--card); border-radius:10px; overflow:hidden; }
+  th,td { padding:7px 9px; border-bottom:0.5px solid var(--bd); text-align:left; white-space:nowrap; }
+  th { background:#f1efe8; color:var(--mut); font-weight:600; cursor:pointer; position:sticky; top:0; }
+  td.pct { font-weight:600; text-align:right; }
+  td.num { text-align:right; color:var(--mut); }
+  .rk { color:#b4b2a9; }
+  .mtag { font-size:10px; padding:1px 5px; border-radius:5px; }
+  .m-US { background:#E6F1FB; color:#0C447C; } .m-CN { background:#FBEAF0; color:#993556; }
+  .k-etf { font-size:10px; color:#3B6D11; background:#EAF3DE; padding:1px 5px; border-radius:5px; margin-left:4px; }
+  .trackblk { background:var(--card); border:0.5px solid var(--bd); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .trackblk h3 { font-size:14px; margin:0 0 2px; } .trackblk .ly { font-size:11px; color:var(--mut); margin-bottom:8px; }
+  .stars { color:#EF9F27; font-size:13px; } .stars .o{ color:#e1e0d9; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; }
+  .chip { font-size:11.5px; padding:3px 7px; border-radius:6px; border:0.5px solid #e1e0d9; background:#fff; }
+  .chip .p { font-weight:600; margin-left:4px; }
+  .brief { background:var(--card); border:0.5px solid var(--bd); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  .brief h3 { margin:0 0 2px; font-size:15px; } .brief .st { font-size:11.5px; color:var(--mut); margin-bottom:8px; }
+  .brief ul { margin:0; padding-left:18px; } .brief li { margin:4px 0; font-size:13px; line-height:1.5; }
+  .empty { color:var(--mut); font-size:13px; padding:20px; text-align:center; }
+  .foot { color:#898781; font-size:11px; margin-top:22px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI 算力链 · 行情看板</h1>
+  <div class="meta" id="meta">加载中…</div>
+</header>
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-s="overview">大盘总览</button>
+  <button class="tab" data-s="rank">涨跌幅排名</button>
+  <button class="tab" data-s="tracks">全部赛道</button>
+  <button class="tab" data-s="brief">盘前/盘后简报</button>
+</nav>
+<main>
+  <section class="sec on" id="overview"></section>
+  <section class="sec" id="rank"></section>
+  <section class="sec" id="tracks"></section>
+  <section class="sec" id="brief"></section>
+  <div class="foot" id="foot"></div>
+</main>
+
+<script>
+const C = {up:"#d03b3b", down:"#0ca30c", flat:"#888"};
+function col(p){ return p>0?C.up:(p<0?C.down:C.flat); }
+function fmtp(p){ return (p>0?"+":"")+p.toFixed(2)+"%"; }
+let DATA = null;
+
+async function load(){
+  try {
+    const r = await fetch("./data.json?t="+Date.now());
+    if(!r.ok) throw new Error("no data");
+    DATA = await r.json();
+  } catch(e){
+    document.getElementById("meta").textContent = "尚无数据 —— 等首次定时任务跑完(或手动触发 workflow)后即会出现。";
+    return;
+  }
+  render();
+}
+
+function render(){
+  const m = DATA.meta||{};
+  const uc = m.updated_cn?new Date(m.updated_cn).toLocaleString("zh-CN"):"—";
+  const uu = m.updated_us?new Date(m.updated_us).toLocaleString("zh-CN"):"—";
+  document.getElementById("meta").innerHTML = "A股数据更新:"+uc+" ｜ 美股数据更新:"+uu+" ｜ 日级/延迟数据,非投资建议";
+  renderOverview(); renderRank(); renderTracks(); renderBrief();
+  const t = DATA.tickers||{};
+  document.getElementById("foot").textContent =
+    "标的总数(有数据):"+Object.keys(t).length+" ｜ 数据源 yfinance ｜ 自动更新于 GitHub Actions ｜ 仅供研究,非投资建议。";
+}
+
+function renderOverview(){
+  const idx = DATA.indices||{};
+  const order = ["000001.SS","399001.SZ","399006.SZ","000300.SS","^GSPC","^IXIC","^SOX","^DJI"];
+  let h = "<h2>A股大盘</h2><div class='grid'>";
+  order.slice(0,4).forEach(s=>{ h+=icard(idx[s]); });
+  h += "</div><h2>美股大盘</h2><div class='grid'>";
+  order.slice(4).forEach(s=>{ h+=icard(idx[s]); });
+  h += "</div>";
+  // 市场宽度
+  const tk = Object.values(DATA.tickers||{});
+  ["CN","US"].forEach(()=>{});
+  function breadth(mkt){
+    const a = tk.filter(x=>x.market===mkt && x.kind==="stock" && x.pct!=null);
+    const up=a.filter(x=>x.pct>0).length, dn=a.filter(x=>x.pct<0).length;
+    return mkt+": "+up+" 涨 / "+dn+" 跌 / 共 "+a.length;
+  }
+  h += "<h2>观察池市场宽度</h2><div class='grid'><div class='icard'><div class='nm'>A股</div><div class='ch'>"+breadth("CN")+"</div></div><div class='icard'><div class='nm'>美股</div><div class='ch'>"+breadth("US")+"</div></div></div>";
+  document.getElementById("overview").innerHTML = h;
+}
+function icard(q){
+  if(!q) return "<div class='icard'><div class='nm'>—</div><div class='pt'>—</div></div>";
+  const c = q.pct!=null?col(q.pct):C.flat;
+  return "<div class='icard'><div class='nm'>"+q.name+"</div><div class='pt'>"+(q.price!=null?q.price.toLocaleString():"—")+"</div><div class='ch' style='color:"+c+"'>"+(q.pct!=null?fmtp(q.pct):"—")+"</div></div>";
+}
+
+let rankState = {market:"ALL", kind:"ALL"};
+function renderRank(){
+  const el = document.getElementById("rank");
+  let h = "<div class='controls'>";
+  h += "<span style='font-size:12px;color:var(--mut)'>市场:</span>";
+  ["ALL","CN","US"].forEach(m=>{ h+="<button data-mk='"+m+"' class='"+(rankState.market===m?"on":"")+"'>"+({ALL:"全部",CN:"A股",US:"美股"}[m])+"</button>"; });
+  h += "<span style='font-size:12px;color:var(--mut);margin-left:8px'>类型:</span>";
+  [["ALL","全部"],["stock","个股"],["etf","ETF"]].forEach(([k,l])=>{ h+="<button data-kd='"+k+"' class='"+(rankState.kind===k?"on":"")+"'>"+l+"</button>"; });
+  h += "<input id='q' placeholder='搜索名称/代码' style='flex:1;min-width:120px'></div>";
+  h += "<div id='ranktbl'></div>";
+  el.innerHTML = h;
+  el.querySelectorAll("[data-mk]").forEach(b=>b.onclick=()=>{rankState.market=b.dataset.mk;renderRank();});
+  el.querySelectorAll("[data-kd]").forEach(b=>b.onclick=()=>{rankState.kind=b.dataset.kd;renderRank();});
+  el.querySelector("#q").oninput = drawRankTbl;
+  drawRankTbl();
+}
+function drawRankTbl(){
+  const q=(document.getElementById("q").value||"").toLowerCase();
+  let rows = Object.values(DATA.tickers||{}).filter(x=>x.pct!=null);
+  if(rankState.market!=="ALL") rows=rows.filter(x=>x.market===rankState.market);
+  if(rankState.kind!=="ALL") rows=rows.filter(x=>x.kind===rankState.kind);
+  if(q) rows=rows.filter(x=>(x.name+x.code).toLowerCase().includes(q));
+  rows.sort((a,b)=>b.pct-a.pct);
+  let h="<table><thead><tr><th>#</th><th>名称</th><th>代码</th><th>市场</th><th style='text-align:right'>价</th><th style='text-align:right'>涨跌幅</th></tr></thead><tbody>";
+  rows.forEach((x,i)=>{
+    h+="<tr><td class='rk'>"+(i+1)+"</td><td>"+x.name+(x.kind==="etf"?"<span class='k-etf'>ETF</span>":"")+"</td><td class='num'>"+x.code+"</td><td><span class='mtag m-"+x.market+"'>"+(x.market==="CN"?"A股":"美股")+"</span></td><td class='num'>"+x.price.toLocaleString()+"</td><td class='pct' style='color:"+col(x.pct)+"'>"+fmtp(x.pct)+"</td></tr>";
+  });
+  h+="</tbody></table>";
+  if(!rows.length) h="<div class='empty'>无匹配数据</div>";
+  document.getElementById("ranktbl").innerHTML=h;
+}
+
+function renderTracks(){
+  const uni = DATA.universe||[];
+  const tk = DATA.tickers||{};
+  // 按赛道分组
+  const byTrack = {};
+  uni.forEach(r=>{ (byTrack[r.track]=byTrack[r.track]||[]).push(r); });
+  // 赛道顺序与星级来自 universe 出现顺序;星级查 TRACK_STARS
+  const seen=[]; uni.forEach(r=>{ if(!seen.includes(r.track)) seen.push(r.track); });
+  let h="";
+  seen.forEach(tname=>{
+    const recs=byTrack[tname];
+    const layer=recs[0]?recs[0].layer:"";
+    const stars=recs[0]?recs[0].stars:0;
+    h+="<div class='trackblk'><h3>"+tname+" <span class='stars'>"+starStr(stars)+"</span></h3><div class='ly'>"+(layer||"")+"</div>";
+    ["US","CN"].forEach(mkt=>{
+      const list=recs.filter(r=>r.market===mkt);
+      if(!list.length) return;
+      h+="<div style='font-size:11px;color:var(--mut);margin:4px 0 3px'>"+(mkt==="US"?"美股":"A股")+"</div><div class='chips'>";
+      list.forEach(r=>{
+        const q=tk[r.yf];
+        const p=q&&q.pct!=null?q.pct:null;
+        const ps=p!=null?"<span class='p' style='color:"+col(p)+"'>"+fmtp(p)+"</span>":"<span class='p' style='color:#b4b2a9'>—</span>";
+        h+="<span class='chip'>"+r.name+ps+"</span>";
+      });
+      h+="</div>";
+    });
+    h+="</div>";
+  });
+  if(!uni.length) h="<div class='empty'>尚无赛道数据</div>";
+  document.getElementById("tracks").innerHTML=h;
+}
+function starStr(n){ let s=""; for(let i=0;i<5;i++) s+= i<n?"★":"<span class='o'>★</span>"; return s; }
+
+function renderBrief(){
+  const b=DATA.briefs||{};
+  const order=[["cn_summary","A股盘后总结"],["cn_preview","A股盘前前瞻"],["us_summary","美股盘后总结"],["us_preview","美股盘前前瞻"]];
+  let h="";
+  order.forEach(([k,l])=>{
+    const x=b[k]; if(!x) return;
+    h+="<div class='brief'><h3>"+x.title+"</h3><div class='st'>"+x.stamp+" · "+(x.headline||"")+"</div><ul>";
+    (x.bullets||[]).forEach(li=>{ h+="<li>"+li+"</li>"; });
+    h+="</ul></div>";
+  });
+  if(!h) h="<div class='empty'>简报将在定时任务运行后生成。</div>";
+  document.getElementById("brief").innerHTML=h;
+}
+
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab"); if(!b) return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.remove("on"));
+  b.classList.add("on");
+  document.getElementById(b.dataset.s).classList.add("on");
+});
+
+load();
+</script>
+</body>
+</html>
