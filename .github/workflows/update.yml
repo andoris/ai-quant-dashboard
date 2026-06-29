@@ -7,9 +7,9 @@ on:
       mode: { description: "模式 preview / summary", default: "summary" }
   schedule:
     - cron: "30 0 * * 1-5"       # A股盘前前瞻
-    - cron: "*/5 1-7 * * 1-5"    # A股盘中每5分钟
+    - cron: "*/15 1-7 * * 1-5"    # A股盘中每5分钟
     - cron: "30 12 * * 1-5"      # 美股盘前前瞻
-    - cron: "*/5 13-21 * * 1-5"  # 美股盘中每5分钟
+    - cron: "*/15 13-21 * * 1-5"  # 美股盘中每5分钟
 
 permissions:
   contents: write
