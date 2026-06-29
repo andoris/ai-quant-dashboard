@@ -1,0 +1,60 @@
+name: Update market data
+
+on:
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "市场 cn / us / both"
+        default: "both"
+      mode:
+        description: "模式 preview / summary"
+        default: "summary"
+  schedule:
+    - cron: "30 0 * * 1-5"
+    - cron: "30 7 * * 1-5"
+    - cron: "30 12 * * 1-5"
+    - cron: "30 20 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Decide market & mode
+        id: cfg
+        run: |
+          MARKET="${{ github.event.inputs.market }}"
+          MODE="${{ github.event.inputs.mode }}"
+          case "${{ github.event.schedule }}" in
+            "30 0 * * 1-5")  MARKET=cn; MODE=preview ;;
+            "30 7 * * 1-5")  MARKET=cn; MODE=summary ;;
+            "30 12 * * 1-5") MARKET=us; MODE=preview ;;
+            "30 20 * * 1-5") MARKET=us; MODE=summary ;;
+          esac
+          MARKET="${MARKET:-both}"; MODE="${MODE:-summary}"
+          echo "market=$MARKET" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+      - name: Fetch & build
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: claude-sonnet-4-6
+        run: python fetch.py --market ${{ steps.cfg.outputs.market }} --mode ${{ steps.cfg.outputs.mode }}
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data.json
+          git commit -m "data update $(date -u +%FT%TZ)" || echo "no changes"
+          git push
