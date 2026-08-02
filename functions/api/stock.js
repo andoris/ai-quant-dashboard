@@ -58,22 +58,23 @@ async function usStock(sym, env) {
   return { sym, market: "US", name: sym, price: last, prev, pct: pct(last, prev), history: H };
 }
 
-// A股:东方财富前复权日线(UTF-8,中文名不乱码)
+// A股:腾讯前复权日线(web.ifzq.gtimg.cn,Cloudflare 可达)。中文名以搜索结果为准。
 async function cnStock(sym) {
   const m = sym.match(/^(\d{6})\.(SS|SZ|BJ)$/);
-  const secid = (m[2] === "SS" ? "1" : "0") + "." + m[1];
-  const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&klt=101&fqt=1&lmt=130&fields1=f1&fields2=f51,f52,f53,f54,f55,f56`;
-  const j = await (await fetch(url)).json();
-  const dd = j.data;
-  if (!dd || !dd.klines || !dd.klines.length) throw "无历史数据";
+  const tc = (m[2] === "SS" ? "sh" : m[2] === "SZ" ? "sz" : "bj") + m[1];
+  const j = await (await fetch(`https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${tc},day,,,130,qfq`)).json();
+  const node = (j.data && j.data[tc]) || {};
+  const arr = node.qfqday || node.day || [];
+  if (!arr.length) throw "无历史数据";
   const H = { d: [], o: [], h: [], l: [], c: [], v: [] };
-  for (const k of dd.klines.slice(-130)) {
-    const p = k.split(",");
-    H.d.push(p[0].slice(5)); H.o.push(+p[1]); H.c.push(+p[2]);
-    H.h.push(+p[3]); H.l.push(+p[4]); H.v.push(+p[5] || 0);
+  for (const x of arr.slice(-130)) {
+    H.d.push(String(x[0]).slice(5)); H.o.push(+x[1]); H.c.push(+x[2]);
+    H.h.push(+x[3]); H.l.push(+x[4]); H.v.push(+x[5] || 0);
   }
   const last = H.c[H.c.length - 1], prev = H.c[H.c.length - 2];
-  return { sym, market: "CN", name: dd.name || sym, price: last, prev, pct: pct(last, prev), history: H };
+  let name = sym;
+  try { if (node.qt && node.qt[tc]) name = node.qt[tc][1]; } catch (e) {}
+  return { sym, market: "CN", name, price: last, prev, pct: pct(last, prev), history: H };
 }
 
 function pct(a, b) { return b ? Math.round(((a - b) / b) * 10000) / 100 : null; }
