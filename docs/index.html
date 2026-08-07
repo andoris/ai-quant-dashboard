@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 算力链 · 行情终端 AI Compute Chain Terminal</title>
+<style>
+  :root{--bg:#0a0e16;--bg2:#0e131d;--panel:#121826;--panel2:#161d2c;--bd:#1f2838;--bd2:#2a3447;
+    --tx:#e6ebf5;--mut:#8a94a8;--dim:#5e6678;--up:#ff4d57;--down:#1fc78b;--flat:#6b7384;--accent:#3b82f6;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#10192b 0%,var(--bg) 60%);color:var(--tx);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+  header{padding:15px 20px 8px;}
+  h1{font-size:17px;margin:0;font-weight:600;display:flex;align-items:center;gap:9px;}
+  h1 small{font-size:11px;color:var(--dim);font-weight:400;}
+  h1::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--down);box-shadow:0 0 10px var(--down);animation:pulse 2.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .meta{font-size:11px;color:var(--mut);margin-top:6px;font-family:var(--mono);text-align:center;}
+  .hdrtop{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;}
+  .hdrtop h1{justify-content:center;font-size:19px;}
+  .hdrbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;}
+  .gsearch{font-size:12.5px;padding:6px 12px;border:1px solid var(--bd2);border-radius:8px;background:var(--panel);color:var(--tx);width:220px;font-family:inherit;}
+  .gsearch:focus{outline:none;border-color:var(--accent);}
+  @media(max-width:860px){.hdrtop h1 small{display:none;}}
+  @media(max-width:560px){.gsearch{width:150px;} .hdrbtns{width:100%;}}
+  .cmodebtn{font-size:12px;padding:6px 13px;border:1px solid var(--bd2);border-radius:8px;background:var(--panel);color:var(--tx);cursor:pointer;font-family:inherit;}
+  .cmodebtn:hover{border-color:var(--accent);}
+  #refreshBtn:active{transform:scale(.96);}
+  .cmodebtn:hover{border-color:var(--accent);color:#fff;}
+  .tabs{display:flex;gap:4px;padding:10px 16px 0;flex-wrap:wrap;border-bottom:1px solid var(--bd);}
+  .tab{font-size:13px;padding:7px 15px;border:none;background:none;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent;border-radius:6px 6px 0 0;line-height:1.25;text-align:center;}
+  .tab small{display:block;font-size:9.5px;color:var(--dim);font-weight:400;}
+  .tab:hover{color:var(--tx);background:var(--panel);}
+  .tab.on{color:#fff;border-bottom-color:var(--accent);font-weight:600;}
+  main{padding:16px;max-width:1240px;margin:0 auto;}
+  .sec{display:none;} .sec.on{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .secTitle{font-size:17px;font-weight:600;margin:14px 0 12px;display:flex;align-items:baseline;gap:9px;}
+  .secTitle span{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:.5px;}
+  .secTitle .hb{font-size:12px;padding:4px 13px;border:1px solid var(--bd2);border-radius:7px;background:var(--panel);color:var(--mut);cursor:pointer;font-family:inherit;font-weight:400;letter-spacing:0;}
+  .secTitle .hb:hover{color:var(--tx);} .secTitle .hb.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .zh2{display:flex;flex-direction:column;line-height:1.16;}
+  .zh2 .en{font-size:10px;color:var(--dim);font-weight:400;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:11px;margin-bottom:18px;}
+  .icard{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--bd);border-radius:12px;padding:13px 15px;position:relative;overflow:hidden;text-align:left;cursor:pointer;color:var(--tx);font-family:inherit;transition:transform .1s,border-color .1s;}
+  .icard:hover{transform:translateY(-2px);border-color:var(--bd2);}
+  .icard::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .icard.u::after{background:var(--up);box-shadow:0 0 12px var(--up);}
+  .icard.d::after{background:var(--down);box-shadow:0 0 12px var(--down);}
+  .icard .nm{font-size:12px;color:var(--mut);} .icard .nm .en{font-size:10px;color:var(--dim);}
+  .icard .pt{font-size:21px;font-weight:600;margin-top:4px;font-family:var(--mono);}
+  .icard .ch{font-size:13px;font-weight:700;margin-top:3px;font-family:var(--mono);}
+  .bre b.u{color:var(--up);} .bre b.d{color:var(--down);}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .panel{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--bd);border-radius:14px;padding:13px 15px;}
+  .panel.full{grid-column:1/-1;}
+  .panel .pt{font-size:13.5px;font-weight:600;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .panel .ps{font-size:11px;color:var(--dim);font-weight:400;}
+  .chart{width:100%;}
+  select{font-size:12px;padding:4px 8px;border:1px solid var(--bd2);border-radius:7px;background:var(--panel);color:var(--tx);font-family:inherit;}
+  @media(max-width:780px){.charts{grid-template-columns:1fr;}}
+  .controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .controls button,input{font-size:12.5px;padding:6px 11px;border:1px solid var(--bd2);border-radius:8px;background:var(--panel);color:var(--tx);cursor:pointer;font-family:inherit;}
+  .controls button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  input::placeholder{color:var(--dim);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel);border:1px solid var(--bd);border-radius:10px;overflow:hidden;}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap;}
+  th{background:var(--bg2);color:var(--mut);font-weight:600;font-size:11px;}
+  tr:hover td{background:var(--panel2);} tr.clk{cursor:pointer;}
+  td.pct{font-weight:700;text-align:right;font-family:var(--mono);} td.num{text-align:right;color:var(--mut);font-family:var(--mono);}
+  .rk{color:var(--dim);font-family:var(--mono);}
+  .mtag{font-size:10px;padding:1px 6px;border-radius:5px;font-weight:600;}
+  .m-US{background:#10243f;color:#6fb0ff;} .m-CN{background:#3a1822;color:#ff8aa0;}
+  .k-etf{font-size:9.5px;color:#9bd;background:#16243a;padding:1px 5px;border-radius:4px;margin-left:5px;}
+  .track{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+  .thead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;}
+  .thead .tn{font-size:15px;font-weight:600;} .thead .tn .en{font-size:10px;color:var(--dim);font-weight:400;display:block;}
+  .thead .ly{font-size:11px;color:var(--dim);}
+  .stars{color:#f5a623;font-size:12px;} .stars .o{color:#39404f;}
+  .avgbadge{margin-left:auto;font-family:var(--mono);font-size:12.5px;font-weight:700;padding:4px 11px;border-radius:8px;border:1px solid var(--bd2);}
+  .breadth{font-size:11px;color:var(--mut);font-family:var(--mono);margin-bottom:8px;}
+  .subl{font-size:10.5px;letter-spacing:1px;color:var(--dim);margin:8px 0 6px;font-weight:600;}
+  .heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:7px;}
+  .tile{border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 11px;display:flex;flex-direction:column;gap:3px;min-height:66px;justify-content:center;cursor:pointer;transition:transform .1s,box-shadow .12s;text-align:left;color:#fff;font-family:inherit;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .tile:hover{transform:translateY(-3px) scale(1.03);border-color:rgba(255,255,255,.45);}
+  .tile .tn{font-size:14.5px;font-weight:700;line-height:1.2;} .tile .tn .en{font-size:11px;opacity:1;color:rgba(255,255,255,.9);font-weight:500;}
+  .tile .tcode{font-size:12px;font-weight:600;font-family:var(--mono);color:#fff;opacity:.95;letter-spacing:.3px;}
+  .tile .tp{font-size:14.5px;font-weight:700;font-family:var(--mono);}
+  .tile.flat{background:var(--panel);text-shadow:none;} .tile.flat .tn{color:#c8cedb;} .tile.flat .tcode{color:var(--mut);}
+  .brief{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--bd);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
+  .brief h3{margin:0 0 3px;font-size:16px;} .brief .st{font-size:11px;color:var(--mut);margin-bottom:12px;font-family:var(--mono);}
+  .brief .intro{font-size:13.5px;line-height:1.75;color:#cfd6e4;margin:0 0 14px;padding:12px 14px;background:rgba(59,130,246,.06);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;}
+  .brief h4{font-size:13px;margin:14px 0 6px;color:#fff;display:flex;align-items:center;gap:7px;} .brief h4::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .brief ul{margin:0;padding-left:0;list-style:none;} .brief li{margin:9px 0;font-size:13.5px;line-height:1.7;padding-left:16px;position:relative;color:#dde3ee;} .brief li::before{content:"▸";position:absolute;left:0;color:var(--accent);}
+  .brief .bsec{margin:14px 0;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:10px;}
+  .brief .bsec h4{margin:0 0 4px;}
+  .brief .blabel{color:var(--mut);font-size:12.5px;}
+  .brief .briefchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+  .brief .bchip{font-size:12.5px;padding:4px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--bd2);white-space:nowrap;}
+  .brief .bchip:hover{border-color:var(--border-strong,#3a4459);}
+  .stratbadge{font-size:11px;padding:2px 9px;border-radius:6px;background:#16243a;color:#6fb0ff;font-weight:500;margin-left:8px;}
+  .secgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-bottom:4px;}
+  .seccard{border:1px solid var(--bd2);border-radius:10px;padding:9px 12px;background:var(--panel);}
+  .seccard .sname{font-weight:600;font-size:13px;} .seccard .stance{font-size:10px;padding:1px 7px;border-radius:5px;margin-left:6px;font-weight:600;}
+  .stance.watch{background:#10243f;color:#6fb0ff;} .stance.avoid{background:#2c2c2a;color:#b4b2a9;}
+  .seccard .sreason{font-size:11.5px;color:var(--mut);margin-top:4px;line-height:1.5;}
+  .pick{display:flex;align-items:flex-start;gap:12px;padding:9px 4px;border-bottom:1px solid var(--bd);cursor:pointer;}
+  .pick:hover{background:var(--panel2);} .pick .pn{font-weight:600;font-size:13px;min-width:128px;}
+  .pick .pn .pc{font-family:var(--mono);font-size:11px;color:var(--mut);margin-left:6px;}
+  .pick .pr{font-size:12px;color:#cfd6e4;line-height:1.5;}
+  .tbcols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media(max-width:700px){.tbcols{grid-template-columns:1fr;}}
+  .tbcol{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:10px 13px;}
+  .tbhd{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .tbgrp{font-size:15.5px;font-weight:700;color:var(--tx);margin:14px 0 6px;border-top:1px solid var(--bd);padding-top:10px;letter-spacing:.5px;}
+  .tbrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 5px;border-radius:6px;cursor:pointer;font-size:12.5px;}
+  .tbrow:hover{background:var(--panel2);}
+  .tbrow .tbn{color:#dde3ee;} .tbrow .tbn em{color:var(--mut);font-style:normal;font-family:var(--mono);font-size:11px;margin-left:4px;}
+  .empty{color:var(--mut);font-size:13px;padding:30px;text-align:center;}
+  .foot{color:var(--dim);font-size:11px;margin-top:24px;line-height:1.6;font-family:var(--mono);}
+  /* 详情页 */
+  .backbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .backbtn{font-size:12.5px;padding:6px 13px;border:1px solid var(--bd2);border-radius:8px;background:var(--panel);color:var(--tx);cursor:pointer;font-family:inherit;}
+  .backbtn:hover{border-color:var(--accent);color:#fff;}
+  .dhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+  .dhead .dn{font-size:22px;font-weight:600;} .dhead .den{font-size:12px;color:var(--mut);}
+  .dhead .dp{font-size:24px;font-weight:700;font-family:var(--mono);} .dhead .dc{font-size:15px;font-weight:700;font-family:var(--mono);}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;margin-bottom:16px;}
+  .stat{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;}
+  .stat .l{font-size:11px;color:var(--mut);} .stat .v{font-size:16px;font-weight:600;font-family:var(--mono);margin-top:3px;}
+  .inds{display:flex;flex-wrap:wrap;gap:7px;}
+  .indchip{font-size:12px;padding:5px 11px;border-radius:8px;border:1px solid var(--bd2);background:var(--panel);}
+  .indchip b{font-weight:700;} .good{color:var(--up);} .bad{color:var(--down);} .neu{color:var(--mut);}
+  .profile{font-size:13px;line-height:1.7;color:#cfd6e4;}
+  .profile .row{display:flex;gap:8px;margin:4px 0;} .profile .row .k{color:var(--mut);min-width:64px;}
+  .disc{font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6;}
+  .analysis{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--bd2);border-radius:14px;padding:16px 18px;margin-bottom:13px;}
+  .analysis .ahdr{font-size:14px;font-weight:600;line-height:1.7;margin-bottom:10px;color:#fff;}
+  .analysis .ast{font-size:11px;color:var(--mut);font-weight:400;font-family:var(--mono);}
+  .analysis .asec{font-size:13px;line-height:1.7;color:#dde3ee;margin:9px 0;}
+  .analysis .atag{display:inline-block;font-size:11px;font-weight:600;color:#6fb0ff;background:#10243f;border-radius:5px;padding:1px 9px;margin-right:8px;}
+  .analysis ul{margin:6px 0 0;padding-left:18px;} .analysis li{margin:4px 0;}
+  .analysis em{color:var(--mut);font-style:normal;font-size:11px;}
+  .analysis .adata{font-size:11px;color:var(--dim);margin-top:11px;}
+  .analysis .adisc{font-size:11.5px;color:#e6a3ab;margin-top:6px;}
+  /* 语言选择遮罩 */
+  #langmask{position:fixed;inset:0;z-index:9999;background:radial-gradient(900px 500px at 50% 10%,#12203a,#0a0e16 70%);display:flex;align-items:center;justify-content:center;}
+  #langmask .lbox{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--bd2);border-radius:18px;padding:34px 32px;max-width:420px;width:88%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  #langmask .llogo{font-size:20px;font-weight:700;margin-bottom:4px;}
+  #langmask .lsub{font-size:12px;color:var(--mut);font-family:var(--mono);margin-bottom:22px;}
+  #langmask .lask{font-size:13px;color:var(--dim);margin-bottom:16px;}
+  #langmask .lbtns{display:flex;gap:12px;justify-content:center;}
+  #langmask .lbtn{flex:1;font-size:15px;font-weight:600;padding:16px 10px;border:1px solid var(--bd2);border-radius:12px;background:var(--panel);color:var(--tx);cursor:pointer;font-family:inherit;transition:transform .1s,border-color .1s;}
+  #langmask .lbtn:hover{transform:translateY(-2px);border-color:var(--accent);color:#fff;}
+  #langmask .lbtn small{display:block;font-size:11px;color:var(--dim);font-weight:400;margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="langmask" style="display:none">
+  <div class="lbox">
+    <div class="llogo">AI大模型 · 美股A股行情</div>
+    <div class="lsub">AI LLM · US &amp; A-Share Markets</div>
+    <div class="lask">请选择语言 / Choose your language</div>
+    <div class="lbtns">
+      <button class="lbtn" data-lang="zh">中文<small>简体中文</small></button>
+      <button class="lbtn" data-lang="en">English<small>Full English UI</small></button>
+    </div>
+  </div>
+</div>
+<header>
+  <div class="hdrtop">
+    <h1>AI大模型 · 美股A股行情 <small>AI LLM · US &amp; A-Share Markets</small></h1>
+    <div class="hdrbtns"><input id="gsearch" class="gsearch" placeholder="🔍 搜名称/代码/Ticker"><button id="langtoggle" class="cmodebtn">EN</button><button id="refreshBtn" class="cmodebtn">🔄 刷新</button><button id="cmode" class="cmodebtn">红涨绿跌</button></div>
+  </div>
+  <div class="meta" id="meta">LOADING…</div>
+</header>
+
+<div id="viewMain">
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-s="overview">大盘总览<small>Overview</small></button>
+  <button class="tab" data-s="rank">涨跌幅排名<small>Movers</small></button>
+  <button class="tab" data-s="tracks">全部赛道<small>Tracks</small></button>
+  <button class="tab" data-s="strategy">AI 策略<small>Strategy</small></button>
+  <button class="tab" data-s="brief">盘前/盘后简报<small>Briefing</small></button>
+</nav>
+<main>
+  <section class="sec on" id="overview"></section>
+  <section class="sec" id="rank"></section>
+  <section class="sec" id="tracks"></section>
+  <section class="sec" id="strategy"></section>
+  <section class="sec" id="brief"></section>
+  <div class="foot" id="foot"></div>
+</main>
+</div>
+
+<div id="viewDetail" style="display:none"><main id="detailMain"></main></div>
+
+<script>
+let RED="#ff4d57",GREEN="#1fc78b",UP="#ff4d57",DOWN="#1fc78b",UP_RGB="255,77,87",DOWN_RGB="31,199,139",GREENUP=false;
+const RED_RGB="255,77,87",GREEN_RGB="31,199,139",FLAT="#6b7384",ACC="#3b82f6",AX="#5e6678",GRID="#1f2838",TXT="#8a94a8";
+try{GREENUP=localStorage.getItem("greenup")==="1";}catch(e){}
+let LANG="zh";try{if(localStorage.getItem("lang")==="en")LANG="en";}catch(e){}
+function L(zh,en){return LANG==="en"?(en==null?zh:en):zh;}
+let TRKEN={};
+function TRK(t){return LANG==="en"?(TRKEN[t]||t):t;}
+function locale(){return LANG==="en"?"en-US":"zh-CN";}
+/* 取对象的语言字段:EN 优先取 field_en,缺失回退中文 */
+function ML(obj,field){if(!obj)return "";if(LANG==="en"&&obj[field+"_en"]!=null&&obj[field+"_en"]!=="")return obj[field+"_en"];return obj[field]!=null?obj[field]:"";}
+function applyColorMode(){UP=GREENUP?GREEN:RED;DOWN=GREENUP?RED:GREEN;UP_RGB=GREENUP?GREEN_RGB:RED_RGB;DOWN_RGB=GREENUP?RED_RGB:GREEN_RGB;
+  try{document.documentElement.style.setProperty("--up",UP);document.documentElement.style.setProperty("--down",DOWN);}catch(e){}}
+applyColorMode();
+const base={backgroundColor:"transparent",textStyle:{color:TXT,fontFamily:"inherit"}};
+function dir(p){return p>0?"up":(p<0?"down":"flat");}
+function col(p){return p>0?UP:(p<0?DOWN:FLAT);}
+function fmtp(p){return (p==null)?"—":(p>0?"+":"")+p.toFixed(2)+"%";}
+function bi(zh,en){if(LANG==="en")return en||zh;return en?("<span class='zh2'>"+zh+"<span class='en'>"+en+"</span></span>"):zh;}
+let DATA=null,charts=[],dcharts=[],heatMkt="ALL",heatSector=null;
+function setColorMode(g){GREENUP=g;applyColorMode();try{localStorage.setItem("greenup",g?"1":"0");}catch(e){}
+  charts.forEach(c=>{try{c.dispose();}catch(e){}});charts=[];
+  var ov=document.getElementById("overview");if(ov)ov.removeAttribute("data-done");
+  heatSector=null;renderAll();
+  if(location.hash.indexOf("#/d/")===0)renderDetail(decodeURIComponent(location.hash.slice(4)));
+  var b=document.getElementById("cmode");if(b)b.textContent=cmodeLabel();}
+
+/* —— 预览回退:实时接口不可用时(本地双击/无网/预览)用随机示例数据渲染版面 —— */
+function genHist(seed){
+  let x=0;for(let i=0;i<seed.length;i++)x=(x*31+seed.charCodeAt(i))>>>0;x=x||7;
+  function rnd(){x=(x*1103515245+12345)>>>0;return (x%100000)/100000;}
+  const n=130,d=[],o=[],h=[],l=[],c=[],v=[];let px=20+rnd()*380;
+  const st=new Date();st.setDate(st.getDate()-Math.round(n*1.4));
+  for(let i=0;i<n;i++){const op=px,cl=op*(0.965+rnd()*0.07);
+    const dt=new Date(st);dt.setDate(st.getDate()+Math.round(i*1.4));
+    d.push((""+(dt.getMonth()+1)).padStart(2,"0")+"-"+(""+dt.getDate()).padStart(2,"0"));
+    o.push(+op.toFixed(2));c.push(+cl.toFixed(2));h.push(+(Math.max(op,cl)*(1+rnd()*0.02)).toFixed(2));
+    l.push(+(Math.min(op,cl)*(1-rnd()*0.02)).toFixed(2));v.push(Math.round(1e6+rnd()*9e6));px=cl;}
+  return {d,o,h,l,c,v};
+}
+function cnSuffix(code){const f=code[0];return (f==="5"||f==="6"||f==="9")?".SS":(f>="0"&&f<="3")?".SZ":".BJ";}
+const UNI_RAW={"tracks":[{"n":"AI 算力芯片","en":"AI Compute Chips","layer":"上游·GPU/ASIC","layer_en":"Upstream · GPU/ASIC","stars":5,"desc":"AI 训练/推理核心算力,GPU、定制 ASIC 与 IP。成长最猛、分化最大,英伟达 CUDA 生态护城河最深。","desc_en":"Core AI training/inference compute: GPUs, custom ASICs and IP. Fastest-growing and most dispersed; NVIDIA's CUDA moat is deepest."},{"n":"存储 HBM/DRAM/NAND","en":"Memory (HBM/DRAM/NAND)","layer":"上游·存储","layer_en":"Upstream · Memory","stars":5,"desc":"AI 硬瓶颈,HBM 需求爆发。真正的 HBM 王者是 SK海力士/三星(非美股),Micron 为追赶者。","desc_en":"The AI hardware bottleneck; HBM demand is booming. True HBM leaders are SK Hynix/Samsung (non-US); Micron is the challenger."},{"n":"光通信/CPO/光模块","en":"Optical / CPO / Transceivers","layer":"中游·光互联","layer_en":"Midstream · Optical","stars":5,"desc":"集群越大,光互联价值占比越高。1.6T 光模块需求跳增,A股中际旭创/新易盛为全球出货龙头。","desc_en":"The larger the cluster, the higher the value of optical interconnect. 1.6T transceiver demand is surging; A-share Innolight/Eoptolink lead global shipments."},{"n":"网络交换/互联","en":"Networking / Interconnect","layer":"中游·网络","layer_en":"Midstream · Networking","stars":4,"desc":"GPU 间互联瓶颈,交换芯片、网卡、高速铜缆。Arista、博通主导,A股盛科通信为交换芯片龙头。","desc_en":"GPU-to-GPU interconnect bottleneck: switch chips, NICs, high-speed copper. Led by Arista and Broadcom; A-share Centec leads switch silicon."},{"n":"EDA/IP","en":"EDA / IP","layer":"上游·设计工具","layer_en":"Upstream · Design Tools","stars":4,"desc":"芯片设计的卡位生意,高毛利深护城河。Synopsys/Cadence 双寡头 + Arm 的 IP 垄断。","desc_en":"The choke-point business of chip design — high margin, deep moat. Synopsys/Cadence duopoly plus Arm's IP dominance."},{"n":"半导体设备(含光刻)","en":"Semicap (incl. Litho)","layer":"上游·设备","layer_en":"Upstream · Equipment","stars":5,"desc":"护城河最深、确定性最高的卖铲子赛道。ASML EUV 光刻独家垄断;A股北方华创/中微为国产替代主力。","desc_en":"The deepest-moat, highest-certainty 'picks and shovels' play. ASML monopolizes EUV litho; A-share Naura/AMEC lead domestic substitution."},{"n":"半导体材料","en":"Semiconductor Materials","layer":"上游·材料","layer_en":"Upstream · Materials","stars":4,"desc":"硅片、光刻胶、电子特气、CMP 等耗材。国产替代空间大,A股沪硅产业/安集科技等领跑。","desc_en":"Consumables: wafers, photoresist, specialty gases, CMP. Large domestic-substitution runway; A-share NSIG/Anji lead."},{"n":"晶圆代工","en":"Foundry","layer":"上游·制造","layer_en":"Upstream · Manufacturing","stars":4,"desc":"先进制程与 CoWoS 封装命门在台积电。A股中芯/华虹为国产制造旗舰,受制裁压制。","desc_en":"Advanced nodes and CoWoS packaging hinge on TSMC. A-share SMIC/Hua Hong are domestic flagships, constrained by sanctions."},{"n":"先进封装/封测","en":"Advanced Packaging / OSAT","layer":"上游·封测","layer_en":"Upstream · Packaging/Test","stars":4,"desc":"CoWoS、Chiplet、2.5D/3D 是 AI 时代真瓶颈。A股长电/通富/华天承接产能转移。","desc_en":"CoWoS, chiplets and 2.5D/3D are the real AI-era bottleneck. A-share JCET/TongFu/Huatian absorb capacity transfer."},{"n":"服务器/整机ODM","en":"Servers / ODM","layer":"中游·整机","layer_en":"Midstream · Systems","stars":5,"desc":"AI 服务器出货高增,订单排到 2027。A股工业富联/浪潮信息为代工与整机龙头。","desc_en":"AI server shipments surging, orders booked into 2027. A-share FII/Inspur lead ODM and systems."},{"n":"数据中心/IDC/液冷","en":"Data Center / IDC / Cooling","layer":"中游·基建","layer_en":"Midstream · Infrastructure","stars":5,"desc":"AI 耗电与散热刚需,电源、液冷、IDC、电力。Vertiv、Equinix 领跑,A股英维克液冷龙头。","desc_en":"AI power and cooling are must-haves: power, liquid cooling, IDC, electricity. Led by Vertiv and Equinix; A-share Envicool leads liquid cooling."},{"n":"PCB/高速覆铜板","en":"PCB / CCL","layer":"中游·载板","layer_en":"Midstream · Substrates","stars":4,"desc":"AI 服务器高速多层 PCB 与高频覆铜板需求高增。A股沪电股份/生益科技领跑。","desc_en":"Surging demand for high-speed multilayer PCBs and high-frequency CCL in AI servers. A-share WUS/Shengyi lead."},{"n":"科技巨头与云","en":"Big Tech & Cloud","layer":"下游·平台","layer_en":"Downstream · Platforms","stars":5,"desc":"全球超大规模 AI 资本开支的主力,云+模型+应用一体,2026 capex 近 7000 亿美元。","desc_en":"The main force behind global hyperscale AI capex — cloud + models + apps combined; ~$700B capex in 2026."},{"n":"AI 软件与应用","en":"AI Software & Apps","layer":"下游·应用","layer_en":"Downstream · Applications","stars":5,"desc":"AI 落地的应用与数据层:Agent、SaaS、数据平台、大模型应用,弹性大、估值高。","desc_en":"The application and data layer where AI lands: agents, SaaS, data platforms, LLM apps — high beta, high valuation."},{"n":"机器人与自动化","en":"Robotics & Automation","layer":"下游·智造","layer_en":"Downstream · Robotics","stars":5,"desc":"人形机器人+工业自动化,减速器/伺服/控制/丝杠等国产链景气,特斯拉 Optimus 催化。","desc_en":"Humanoid robots plus industrial automation; domestic reducer/servo/control/screw chains buoyant, catalyzed by Tesla Optimus."},{"n":"智能汽车与自动驾驶","en":"Smart EV & Autonomous","layer":"下游·出行","layer_en":"Downstream · Mobility","stars":4,"desc":"电动化+智能化,自动驾驶芯片/域控/激光雷达/智能座舱,中美新能源与 ADAS 双主线。","desc_en":"Electrification plus intelligence: AD chips/domain controllers/LiDAR/smart cockpit; China-US EV and ADAS twin themes."},{"n":"AI 电力与能源","en":"AI Power & Energy","layer":"中游·能源","layer_en":"Midstream · Energy","stars":5,"desc":"AI 数据中心耗电激增,发电(核电/燃机)、电网设备、储能、光伏受益,电力成 AI 卡点。","desc_en":"AI data-center power demand is spiking; generation (nuclear/turbines), grid gear, storage and solar benefit — power becomes AI's choke point."},{"n":"网络安全","en":"Cybersecurity","layer":"下游·安全","layer_en":"Downstream · Security","stars":4,"desc":"AI 时代攻防升级,云安全/零信任/终端安全需求刚性,中美各有龙头。","desc_en":"Escalating AI-era attack/defense; cloud security/zero-trust/endpoint demand is rigid, with leaders in both China and the US."},{"n":"互联网与中概","en":"Internet & China ADR","layer":"下游·平台","layer_en":"Downstream · Platforms","stars":4,"desc":"中美互联网平台:中概 ADR + 美股社媒/流媒体,流量+AI 商业化双驱动。","desc_en":"China-US internet platforms: China ADRs plus US social/streaming, driven by traffic and AI monetization."},{"n":"消费电子与AI终端","en":"Consumer Electronics & AI Devices","layer":"下游·终端","layer_en":"Downstream · Devices","stars":4,"desc":"AI 手机/PC/AIoT/可穿戴换机潮,声光电模组、组装、面板、电池链受益。","desc_en":"AI phone/PC/AIoT/wearable upgrade cycle; optical-acoustic-electronic modules, assembly, panels and battery chains benefit."}],"universe":[{"code":"NVDA","name":"英伟达","en":"NVIDIA","market":"US","kind":"stock","yf":"NVDA","t":0},{"code":"AVGO","name":"博通","en":"Broadcom","market":"US","kind":"stock","yf":"AVGO","t":0},{"code":"AMD","name":"超威","en":"AMD","market":"US","kind":"stock","yf":"AMD","t":0},{"code":"MRVL","name":"美满","en":"Marvell","market":"US","kind":"stock","yf":"MRVL","t":0},{"code":"ARM","name":"Arm","en":"Arm Holdings","market":"US","kind":"stock","yf":"ARM","t":0},{"code":"QCOM","name":"高通","en":"Qualcomm","market":"US","kind":"stock","yf":"QCOM","t":0},{"code":"INTC","name":"英特尔","en":"Intel","market":"US","kind":"stock","yf":"INTC","t":0},{"code":"ALAB","name":"Astera Labs","en":"Astera Labs","market":"US","kind":"stock","yf":"ALAB","t":0},{"code":"CRDO","name":"Credo","en":"Credo Technology","market":"US","kind":"stock","yf":"CRDO","t":0},{"code":"AMBA","name":"安霸","en":"Ambarella","market":"US","kind":"stock","yf":"AMBA","t":0},{"code":"TSM","name":"台积电","en":"TSMC","market":"US","kind":"stock","yf":"TSM","t":0},{"code":"MU","name":"美光","en":"Micron","market":"US","kind":"stock","yf":"MU","t":0},{"code":"LSCC","name":"莱迪思","en":"Lattice","market":"US","kind":"stock","yf":"LSCC","t":0},{"code":"SLAB","name":"芯科科技","en":"Silicon Labs","market":"US","kind":"stock","yf":"SLAB","t":0},{"code":"SITM","name":"SiTime","en":"SiTime","market":"US","kind":"stock","yf":"SITM","t":0},{"code":"688256","name":"寒武纪","en":null,"market":"CN","kind":"stock","yf":"688256.SS","t":0},{"code":"688041","name":"海光信息","en":null,"market":"CN","kind":"stock","yf":"688041.SS","t":0},{"code":"688047","name":"龙芯中科","en":null,"market":"CN","kind":"stock","yf":"688047.SS","t":0},{"code":"300474","name":"景嘉微","en":null,"market":"CN","kind":"stock","yf":"300474.SZ","t":0},{"code":"688008","name":"澜起科技","en":null,"market":"CN","kind":"stock","yf":"688008.SS","t":0},{"code":"688521","name":"芯原股份","en":null,"market":"CN","kind":"stock","yf":"688521.SS","t":0},{"code":"688385","name":"复旦微电","en":null,"market":"CN","kind":"stock","yf":"688385.SS","t":0},{"code":"002049","name":"紫光国微","en":null,"market":"CN","kind":"stock","yf":"002049.SZ","t":0},{"code":"688107","name":"安路科技","en":null,"market":"CN","kind":"stock","yf":"688107.SS","t":0},{"code":"688262","name":"国芯科技","en":null,"market":"CN","kind":"stock","yf":"688262.SS","t":0},{"code":"603893","name":"瑞芯微","en":null,"market":"CN","kind":"stock","yf":"603893.SS","t":0},{"code":"300458","name":"全志科技","en":null,"market":"CN","kind":"stock","yf":"300458.SZ","t":0},{"code":"688099","name":"晶晨股份","en":null,"market":"CN","kind":"stock","yf":"688099.SS","t":0},{"code":"688608","name":"恒玄科技","en":null,"market":"CN","kind":"stock","yf":"688608.SS","t":0},{"code":"300613","name":"富瀚微","en":null,"market":"CN","kind":"stock","yf":"300613.SZ","t":0},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":0},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":0},{"code":"SOXQ","name":"Invesco半导体ETF","en":"Invesco PHLX Semiconductor ETF","market":"US","kind":"etf","yf":"SOXQ","t":0},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":0},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":0},{"code":"MU","name":"美光","en":"Micron","market":"US","kind":"stock","yf":"MU","t":1},{"code":"SNDK","name":"SanDisk","en":"SanDisk","market":"US","kind":"stock","yf":"SNDK","t":1},{"code":"WDC","name":"西部数据","en":"Western Digital","market":"US","kind":"stock","yf":"WDC","t":1},{"code":"STX","name":"希捷","en":"Seagate","market":"US","kind":"stock","yf":"STX","t":1},{"code":"RMBS","name":"Rambus","en":"Rambus","market":"US","kind":"stock","yf":"RMBS","t":1},{"code":"SIMO","name":"慧荣科技","en":"Silicon Motion","market":"US","kind":"stock","yf":"SIMO","t":1},{"code":"PSTG","name":"Pure Storage","en":"Pure Storage","market":"US","kind":"stock","yf":"PSTG","t":1},{"code":"NTAP","name":"NetApp","en":"NetApp","market":"US","kind":"stock","yf":"NTAP","t":1},{"code":"NLST","name":"Netlist","en":"Netlist","market":"US","kind":"stock","yf":"NLST","t":1},{"code":"SGH","name":"Penguin Solutions","en":"Penguin Solutions","market":"US","kind":"stock","yf":"SGH","t":1},{"code":"MRVL","name":"美满","en":"Marvell","market":"US","kind":"stock","yf":"MRVL","t":1},{"code":"AVGO","name":"博通","en":"Broadcom","market":"US","kind":"stock","yf":"AVGO","t":1},{"code":"MCHP","name":"微芯","en":"Microchip","market":"US","kind":"stock","yf":"MCHP","t":1},{"code":"SMCI","name":"超微电脑","en":"Super Micro","market":"US","kind":"stock","yf":"SMCI","t":1},{"code":"DELL","name":"戴尔","en":"Dell","market":"US","kind":"stock","yf":"DELL","t":1},{"code":"603986","name":"兆易创新","en":null,"market":"CN","kind":"stock","yf":"603986.SS","t":1},{"code":"301308","name":"江波龙","en":null,"market":"CN","kind":"stock","yf":"301308.SZ","t":1},{"code":"300223","name":"北京君正","en":null,"market":"CN","kind":"stock","yf":"300223.SZ","t":1},{"code":"688525","name":"佰维存储","en":null,"market":"CN","kind":"stock","yf":"688525.SS","t":1},{"code":"688110","name":"东芯股份","en":null,"market":"CN","kind":"stock","yf":"688110.SS","t":1},{"code":"688766","name":"普冉股份","en":null,"market":"CN","kind":"stock","yf":"688766.SS","t":1},{"code":"001309","name":"德明利","en":null,"market":"CN","kind":"stock","yf":"001309.SZ","t":1},{"code":"000021","name":"深科技","en":null,"market":"CN","kind":"stock","yf":"000021.SZ","t":1},{"code":"300475","name":"香农芯创","en":null,"market":"CN","kind":"stock","yf":"300475.SZ","t":1},{"code":"300302","name":"同有科技","en":null,"market":"CN","kind":"stock","yf":"300302.SZ","t":1},{"code":"688123","name":"聚辰股份","en":null,"market":"CN","kind":"stock","yf":"688123.SS","t":1},{"code":"300672","name":"国科微","en":null,"market":"CN","kind":"stock","yf":"300672.SZ","t":1},{"code":"300042","name":"朗科科技","en":null,"market":"CN","kind":"stock","yf":"300042.SZ","t":1},{"code":"688416","name":"恒烁股份","en":null,"market":"CN","kind":"stock","yf":"688416.SS","t":1},{"code":"688332","name":"中科蓝讯","en":null,"market":"CN","kind":"stock","yf":"688332.SS","t":1},{"code":"DRAM","name":"Roundhill存储ETF","en":"Roundhill Memory ETF","market":"US","kind":"etf","yf":"DRAM","t":1},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":1},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":1},{"code":"SOXQ","name":"Invesco半导体ETF","en":"Invesco PHLX Semiconductor ETF","market":"US","kind":"etf","yf":"SOXQ","t":1},{"code":"512480","name":"半导体ETF","en":null,"market":"CN","kind":"etf","yf":"512480.SS","t":1},{"code":"COHR","name":"Coherent","en":"Coherent","market":"US","kind":"stock","yf":"COHR","t":2},{"code":"LITE","name":"Lumentum","en":"Lumentum","market":"US","kind":"stock","yf":"LITE","t":2},{"code":"FN","name":"Fabrinet","en":"Fabrinet","market":"US","kind":"stock","yf":"FN","t":2},{"code":"AAOI","name":"应用光电","en":"Applied Optoelectronics","market":"US","kind":"stock","yf":"AAOI","t":2},{"code":"CIEN","name":"Ciena","en":"Ciena","market":"US","kind":"stock","yf":"CIEN","t":2},{"code":"MTSI","name":"MACOM","en":"MACOM","market":"US","kind":"stock","yf":"MTSI","t":2},{"code":"POET","name":"POET Tech","en":"POET Technologies","market":"US","kind":"stock","yf":"POET","t":2},{"code":"MRVL","name":"美满","en":"Marvell","market":"US","kind":"stock","yf":"MRVL","t":2},{"code":"AVGO","name":"博通","en":"Broadcom","market":"US","kind":"stock","yf":"AVGO","t":2},{"code":"GLW","name":"康宁","en":"Corning","market":"US","kind":"stock","yf":"GLW","t":2},{"code":"NVDA","name":"英伟达","en":"NVIDIA","market":"US","kind":"stock","yf":"NVDA","t":2},{"code":"ANET","name":"Arista","en":"Arista Networks","market":"US","kind":"stock","yf":"ANET","t":2},{"code":"CSCO","name":"思科","en":"Cisco","market":"US","kind":"stock","yf":"CSCO","t":2},{"code":"ALAB","name":"Astera Labs","en":"Astera Labs","market":"US","kind":"stock","yf":"ALAB","t":2},{"code":"CRDO","name":"Credo","en":"Credo Technology","market":"US","kind":"stock","yf":"CRDO","t":2},{"code":"300308","name":"中际旭创","en":null,"market":"CN","kind":"stock","yf":"300308.SZ","t":2},{"code":"300502","name":"新易盛","en":null,"market":"CN","kind":"stock","yf":"300502.SZ","t":2},{"code":"300394","name":"天孚通信","en":null,"market":"CN","kind":"stock","yf":"300394.SZ","t":2},{"code":"002281","name":"光迅科技","en":null,"market":"CN","kind":"stock","yf":"002281.SZ","t":2},{"code":"000988","name":"华工科技","en":null,"market":"CN","kind":"stock","yf":"000988.SZ","t":2},{"code":"300570","name":"太辰光","en":null,"market":"CN","kind":"stock","yf":"300570.SZ","t":2},{"code":"688498","name":"源杰科技","en":null,"market":"CN","kind":"stock","yf":"688498.SS","t":2},{"code":"603083","name":"剑桥科技","en":null,"market":"CN","kind":"stock","yf":"603083.SS","t":2},{"code":"688313","name":"仕佳光子","en":null,"market":"CN","kind":"stock","yf":"688313.SS","t":2},{"code":"300548","name":"博创科技","en":null,"market":"CN","kind":"stock","yf":"300548.SZ","t":2},{"code":"688205","name":"德科立","en":null,"market":"CN","kind":"stock","yf":"688205.SS","t":2},{"code":"301205","name":"联特科技","en":null,"market":"CN","kind":"stock","yf":"301205.SZ","t":2},{"code":"300620","name":"光库科技","en":null,"market":"CN","kind":"stock","yf":"300620.SZ","t":2},{"code":"002902","name":"铭普光磁","en":null,"market":"CN","kind":"stock","yf":"002902.SZ","t":2},{"code":"003031","name":"中瓷电子","en":null,"market":"CN","kind":"stock","yf":"003031.SZ","t":2},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":2},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":2},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":2},{"code":"515880","name":"通信ETF","en":null,"market":"CN","kind":"etf","yf":"515880.SS","t":2},{"code":"560660","name":"通信设备ETF","en":null,"market":"CN","kind":"etf","yf":"560660.SS","t":2},{"code":"ANET","name":"Arista","en":"Arista Networks","market":"US","kind":"stock","yf":"ANET","t":3},{"code":"AVGO","name":"博通","en":"Broadcom","market":"US","kind":"stock","yf":"AVGO","t":3},{"code":"NVDA","name":"英伟达","en":"NVIDIA","market":"US","kind":"stock","yf":"NVDA","t":3},{"code":"MRVL","name":"美满","en":"Marvell","market":"US","kind":"stock","yf":"MRVL","t":3},{"code":"ALAB","name":"Astera Labs","en":"Astera Labs","market":"US","kind":"stock","yf":"ALAB","t":3},{"code":"CRDO","name":"Credo","en":"Credo Technology","market":"US","kind":"stock","yf":"CRDO","t":3},{"code":"CSCO","name":"思科","en":"Cisco","market":"US","kind":"stock","yf":"CSCO","t":3},{"code":"CLS","name":"Celestica","en":"Celestica","market":"US","kind":"stock","yf":"CLS","t":3},{"code":"CIEN","name":"Ciena","en":"Ciena","market":"US","kind":"stock","yf":"CIEN","t":3},{"code":"JNPR","name":"瞻博","en":"Juniper Networks","market":"US","kind":"stock","yf":"JNPR","t":3},{"code":"COHR","name":"Coherent","en":"Coherent","market":"US","kind":"stock","yf":"COHR","t":3},{"code":"FN","name":"Fabrinet","en":"Fabrinet","market":"US","kind":"stock","yf":"FN","t":3},{"code":"MTSI","name":"MACOM","en":"MACOM","market":"US","kind":"stock","yf":"MTSI","t":3},{"code":"HPE","name":"慧与","en":"HPE","market":"US","kind":"stock","yf":"HPE","t":3},{"code":"JBL","name":"Jabil","en":"Jabil","market":"US","kind":"stock","yf":"JBL","t":3},{"code":"688702","name":"盛科通信","en":null,"market":"CN","kind":"stock","yf":"688702.SS","t":3},{"code":"000938","name":"紫光股份","en":null,"market":"CN","kind":"stock","yf":"000938.SZ","t":3},{"code":"301165","name":"锐捷网络","en":null,"market":"CN","kind":"stock","yf":"301165.SZ","t":3},{"code":"002475","name":"立讯精密","en":null,"market":"CN","kind":"stock","yf":"002475.SZ","t":3},{"code":"002130","name":"沃尔核材","en":null,"market":"CN","kind":"stock","yf":"002130.SZ","t":3},{"code":"300913","name":"兆龙互连","en":null,"market":"CN","kind":"stock","yf":"300913.SZ","t":3},{"code":"301191","name":"菲菱科思","en":null,"market":"CN","kind":"stock","yf":"301191.SZ","t":3},{"code":"688668","name":"鼎通科技","en":null,"market":"CN","kind":"stock","yf":"688668.SS","t":3},{"code":"300563","name":"神宇股份","en":null,"market":"CN","kind":"stock","yf":"300563.SZ","t":3},{"code":"603118","name":"共进股份","en":null,"market":"CN","kind":"stock","yf":"603118.SS","t":3},{"code":"600498","name":"烽火通信","en":null,"market":"CN","kind":"stock","yf":"600498.SS","t":3},{"code":"000063","name":"中兴通讯","en":null,"market":"CN","kind":"stock","yf":"000063.SZ","t":3},{"code":"688800","name":"瑞可达","en":null,"market":"CN","kind":"stock","yf":"688800.SS","t":3},{"code":"300679","name":"电连技术","en":null,"market":"CN","kind":"stock","yf":"300679.SZ","t":3},{"code":"002897","name":"意华股份","en":null,"market":"CN","kind":"stock","yf":"002897.SZ","t":3},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":3},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":3},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":3},{"code":"515880","name":"通信ETF","en":null,"market":"CN","kind":"etf","yf":"515880.SS","t":3},{"code":"FIVG","name":"Defiance 5G ETF","en":"Defiance Next Gen 5G ETF","market":"US","kind":"etf","yf":"FIVG","t":3},{"code":"SNPS","name":"新思","en":"Synopsys","market":"US","kind":"stock","yf":"SNPS","t":4},{"code":"CDNS","name":"Cadence","en":"Cadence","market":"US","kind":"stock","yf":"CDNS","t":4},{"code":"ARM","name":"Arm","en":"Arm Holdings","market":"US","kind":"stock","yf":"ARM","t":4},{"code":"ANSS","name":"Ansys","en":"Ansys","market":"US","kind":"stock","yf":"ANSS","t":4},{"code":"KEYS","name":"是德科技","en":"Keysight","market":"US","kind":"stock","yf":"KEYS","t":4},{"code":"CEVA","name":"CEVA","en":"CEVA","market":"US","kind":"stock","yf":"CEVA","t":4},{"code":"RMBS","name":"Rambus","en":"Rambus","market":"US","kind":"stock","yf":"RMBS","t":4},{"code":"LSCC","name":"莱迪思","en":"Lattice","market":"US","kind":"stock","yf":"LSCC","t":4},{"code":"SLAB","name":"芯科科技","en":"Silicon Labs","market":"US","kind":"stock","yf":"SLAB","t":4},{"code":"SITM","name":"SiTime","en":"SiTime","market":"US","kind":"stock","yf":"SITM","t":4},{"code":"QCOM","name":"高通","en":"Qualcomm","market":"US","kind":"stock","yf":"QCOM","t":4},{"code":"ALAB","name":"Astera Labs","en":"Astera Labs","market":"US","kind":"stock","yf":"ALAB","t":4},{"code":"CRDO","name":"Credo","en":"Credo Technology","market":"US","kind":"stock","yf":"CRDO","t":4},{"code":"TER","name":"泰瑞达","en":"Teradyne","market":"US","kind":"stock","yf":"TER","t":4},{"code":"FORM","name":"FormFactor","en":"FormFactor","market":"US","kind":"stock","yf":"FORM","t":4},{"code":"301269","name":"华大九天","en":null,"market":"CN","kind":"stock","yf":"301269.SZ","t":4},{"code":"688206","name":"概伦电子","en":null,"market":"CN","kind":"stock","yf":"688206.SS","t":4},{"code":"301095","name":"广立微","en":null,"market":"CN","kind":"stock","yf":"301095.SZ","t":4},{"code":"688521","name":"芯原股份","en":null,"market":"CN","kind":"stock","yf":"688521.SS","t":4},{"code":"688691","name":"灿芯股份","en":null,"market":"CN","kind":"stock","yf":"688691.SS","t":4},{"code":"688220","name":"翱捷科技","en":null,"market":"CN","kind":"stock","yf":"688220.SS","t":4},{"code":"688262","name":"国芯科技","en":null,"market":"CN","kind":"stock","yf":"688262.SS","t":4},{"code":"002049","name":"紫光国微","en":null,"market":"CN","kind":"stock","yf":"002049.SZ","t":4},{"code":"688385","name":"复旦微电","en":null,"market":"CN","kind":"stock","yf":"688385.SS","t":4},{"code":"688047","name":"龙芯中科","en":null,"market":"CN","kind":"stock","yf":"688047.SS","t":4},{"code":"688200","name":"华峰测控","en":null,"market":"CN","kind":"stock","yf":"688200.SS","t":4},{"code":"688135","name":"利扬芯片","en":null,"market":"CN","kind":"stock","yf":"688135.SS","t":4},{"code":"688372","name":"伟测科技","en":null,"market":"CN","kind":"stock","yf":"688372.SS","t":4},{"code":"688728","name":"格科微","en":null,"market":"CN","kind":"stock","yf":"688728.SS","t":4},{"code":"688213","name":"思特威","en":null,"market":"CN","kind":"stock","yf":"688213.SS","t":4},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":4},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":4},{"code":"IGV","name":"iShares软件ETF","en":"iShares Expanded Tech-Software ETF","market":"US","kind":"etf","yf":"IGV","t":4},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":4},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":4},{"code":"ASML","name":"阿斯麦","en":"ASML","market":"US","kind":"stock","yf":"ASML","t":5},{"code":"AMAT","name":"应用材料","en":"Applied Materials","market":"US","kind":"stock","yf":"AMAT","t":5},{"code":"LRCX","name":"泛林","en":"Lam Research","market":"US","kind":"stock","yf":"LRCX","t":5},{"code":"KLAC","name":"科磊","en":"KLA","market":"US","kind":"stock","yf":"KLAC","t":5},{"code":"TER","name":"泰瑞达","en":"Teradyne","market":"US","kind":"stock","yf":"TER","t":5},{"code":"ONTO","name":"Onto","en":"Onto Innovation","market":"US","kind":"stock","yf":"ONTO","t":5},{"code":"ACLS","name":"Axcelis","en":"Axcelis","market":"US","kind":"stock","yf":"ACLS","t":5},{"code":"KLIC","name":"库力索法","en":"Kulicke & Soffa","market":"US","kind":"stock","yf":"KLIC","t":5},{"code":"CAMT","name":"Camtek","en":"Camtek","market":"US","kind":"stock","yf":"CAMT","t":5},{"code":"FORM","name":"FormFactor","en":"FormFactor","market":"US","kind":"stock","yf":"FORM","t":5},{"code":"NVMI","name":"Nova","en":"Nova","market":"US","kind":"stock","yf":"NVMI","t":5},{"code":"ICHR","name":"Ichor","en":"Ichor","market":"US","kind":"stock","yf":"ICHR","t":5},{"code":"UCTT","name":"Ultra Clean","en":"Ultra Clean","market":"US","kind":"stock","yf":"UCTT","t":5},{"code":"ACMR","name":"盛美半导体","en":"ACM Research","market":"US","kind":"stock","yf":"ACMR","t":5},{"code":"AEHR","name":"Aehr","en":"Aehr Test Systems","market":"US","kind":"stock","yf":"AEHR","t":5},{"code":"002371","name":"北方华创","en":null,"market":"CN","kind":"stock","yf":"002371.SZ","t":5},{"code":"688012","name":"中微公司","en":null,"market":"CN","kind":"stock","yf":"688012.SS","t":5},{"code":"688072","name":"拓荆科技","en":null,"market":"CN","kind":"stock","yf":"688072.SS","t":5},{"code":"688082","name":"盛美上海","en":null,"market":"CN","kind":"stock","yf":"688082.SS","t":5},{"code":"688120","name":"华海清科","en":null,"market":"CN","kind":"stock","yf":"688120.SS","t":5},{"code":"688037","name":"芯源微","en":null,"market":"CN","kind":"stock","yf":"688037.SS","t":5},{"code":"688361","name":"中科飞测","en":null,"market":"CN","kind":"stock","yf":"688361.SS","t":5},{"code":"300567","name":"精测电子","en":null,"market":"CN","kind":"stock","yf":"300567.SZ","t":5},{"code":"300604","name":"长川科技","en":null,"market":"CN","kind":"stock","yf":"300604.SZ","t":5},{"code":"688147","name":"微导纳米","en":null,"market":"CN","kind":"stock","yf":"688147.SS","t":5},{"code":"600641","name":"万业企业","en":null,"market":"CN","kind":"stock","yf":"600641.SS","t":5},{"code":"603690","name":"至纯科技","en":null,"market":"CN","kind":"stock","yf":"603690.SS","t":5},{"code":"688200","name":"华峰测控","en":null,"market":"CN","kind":"stock","yf":"688200.SS","t":5},{"code":"688409","name":"富创精密","en":null,"market":"CN","kind":"stock","yf":"688409.SS","t":5},{"code":"300260","name":"新莱应材","en":null,"market":"CN","kind":"stock","yf":"300260.SZ","t":5},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":5},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":5},{"code":"SOXQ","name":"Invesco半导体ETF","en":"Invesco PHLX Semiconductor ETF","market":"US","kind":"etf","yf":"SOXQ","t":5},{"code":"159516","name":"半导体设备ETF","en":null,"market":"CN","kind":"etf","yf":"159516.SZ","t":5},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":5},{"code":"ENTG","name":"Entegris","en":"Entegris","market":"US","kind":"stock","yf":"ENTG","t":6},{"code":"MKSI","name":"MKS Instruments","en":"MKS Instruments","market":"US","kind":"stock","yf":"MKSI","t":6},{"code":"LIN","name":"林德","en":"Linde","market":"US","kind":"stock","yf":"LIN","t":6},{"code":"APD","name":"空气产品","en":"Air Products","market":"US","kind":"stock","yf":"APD","t":6},{"code":"DD","name":"杜邦","en":"DuPont","market":"US","kind":"stock","yf":"DD","t":6},{"code":"MTRN","name":"Materion","en":"Materion","market":"US","kind":"stock","yf":"MTRN","t":6},{"code":"AVTR","name":"Avantor","en":"Avantor","market":"US","kind":"stock","yf":"AVTR","t":6},{"code":"IOSP","name":"Innospec","en":"Innospec","market":"US","kind":"stock","yf":"IOSP","t":6},{"code":"KWR","name":"Quaker Houghton","en":"Quaker Houghton","market":"US","kind":"stock","yf":"KWR","t":6},{"code":"FUL","name":"HB Fuller","en":"H.B. Fuller","market":"US","kind":"stock","yf":"FUL","t":6},{"code":"ICHR","name":"Ichor","en":"Ichor","market":"US","kind":"stock","yf":"ICHR","t":6},{"code":"UCTT","name":"Ultra Clean","en":"Ultra Clean","market":"US","kind":"stock","yf":"UCTT","t":6},{"code":"AVNT","name":"Avient","en":"Avient","market":"US","kind":"stock","yf":"AVNT","t":6},{"code":"OLN","name":"Olin","en":"Olin","market":"US","kind":"stock","yf":"OLN","t":6},{"code":"ASH","name":"Ashland","en":"Ashland","market":"US","kind":"stock","yf":"ASH","t":6},{"code":"688126","name":"沪硅产业","en":null,"market":"CN","kind":"stock","yf":"688126.SS","t":6},{"code":"688019","name":"安集科技","en":null,"market":"CN","kind":"stock","yf":"688019.SS","t":6},{"code":"300054","name":"鼎龙股份","en":null,"market":"CN","kind":"stock","yf":"300054.SZ","t":6},{"code":"002409","name":"雅克科技","en":null,"market":"CN","kind":"stock","yf":"002409.SZ","t":6},{"code":"688268","name":"华特气体","en":null,"market":"CN","kind":"stock","yf":"688268.SS","t":6},{"code":"300666","name":"江丰电子","en":null,"market":"CN","kind":"stock","yf":"300666.SZ","t":6},{"code":"300346","name":"南大光电","en":null,"market":"CN","kind":"stock","yf":"300346.SZ","t":6},{"code":"605358","name":"立昂微","en":null,"market":"CN","kind":"stock","yf":"605358.SS","t":6},{"code":"603650","name":"彤程新材","en":null,"market":"CN","kind":"stock","yf":"603650.SS","t":6},{"code":"688233","name":"神工股份","en":null,"market":"CN","kind":"stock","yf":"688233.SS","t":6},{"code":"300655","name":"晶瑞电材","en":null,"market":"CN","kind":"stock","yf":"300655.SZ","t":6},{"code":"300236","name":"上海新阳","en":null,"market":"CN","kind":"stock","yf":"300236.SZ","t":6},{"code":"688106","name":"金宏气体","en":null,"market":"CN","kind":"stock","yf":"688106.SS","t":6},{"code":"688548","name":"广钢气体","en":null,"market":"CN","kind":"stock","yf":"688548.SS","t":6},{"code":"600206","name":"有研新材","en":null,"market":"CN","kind":"stock","yf":"600206.SS","t":6},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":6},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":6},{"code":"516020","name":"半导体材料ETF","en":null,"market":"CN","kind":"etf","yf":"516020.SS","t":6},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":6},{"code":"512480","name":"半导体ETF","en":null,"market":"CN","kind":"etf","yf":"512480.SS","t":6},{"code":"TSM","name":"台积电","en":"TSMC","market":"US","kind":"stock","yf":"TSM","t":7},{"code":"INTC","name":"英特尔","en":"Intel","market":"US","kind":"stock","yf":"INTC","t":7},{"code":"GFS","name":"GlobalFoundries","en":"GlobalFoundries","market":"US","kind":"stock","yf":"GFS","t":7},{"code":"UMC","name":"联电","en":"UMC","market":"US","kind":"stock","yf":"UMC","t":7},{"code":"TSEM","name":"Tower","en":"Tower Semiconductor","market":"US","kind":"stock","yf":"TSEM","t":7},{"code":"STM","name":"意法半导体","en":"STMicroelectronics","market":"US","kind":"stock","yf":"STM","t":7},{"code":"ON","name":"安森美","en":"Onsemi","market":"US","kind":"stock","yf":"ON","t":7},{"code":"TXN","name":"德州仪器","en":"Texas Instruments","market":"US","kind":"stock","yf":"TXN","t":7},{"code":"ADI","name":"亚德诺","en":"Analog Devices","market":"US","kind":"stock","yf":"ADI","t":7},{"code":"MCHP","name":"微芯","en":"Microchip","market":"US","kind":"stock","yf":"MCHP","t":7},{"code":"NXPI","name":"恩智浦","en":"NXP","market":"US","kind":"stock","yf":"NXPI","t":7},{"code":"SWKS","name":"思佳讯","en":"Skyworks","market":"US","kind":"stock","yf":"SWKS","t":7},{"code":"QRVO","name":"Qorvo","en":"Qorvo","market":"US","kind":"stock","yf":"QRVO","t":7},{"code":"MPWR","name":"Monolithic Power","en":"Monolithic Power","market":"US","kind":"stock","yf":"MPWR","t":7},{"code":"DIOD","name":"美台","en":"Diodes","market":"US","kind":"stock","yf":"DIOD","t":7},{"code":"688981","name":"中芯国际","en":null,"market":"CN","kind":"stock","yf":"688981.SS","t":7},{"code":"688347","name":"华虹公司","en":null,"market":"CN","kind":"stock","yf":"688347.SS","t":7},{"code":"688249","name":"晶合集成","en":null,"market":"CN","kind":"stock","yf":"688249.SS","t":7},{"code":"688469","name":"芯联集成","en":null,"market":"CN","kind":"stock","yf":"688469.SS","t":7},{"code":"688172","name":"燕东微","en":null,"market":"CN","kind":"stock","yf":"688172.SS","t":7},{"code":"600460","name":"士兰微","en":null,"market":"CN","kind":"stock","yf":"600460.SS","t":7},{"code":"688396","name":"华润微","en":null,"market":"CN","kind":"stock","yf":"688396.SS","t":7},{"code":"688187","name":"时代电气","en":null,"market":"CN","kind":"stock","yf":"688187.SS","t":7},{"code":"600745","name":"闻泰科技","en":null,"market":"CN","kind":"stock","yf":"600745.SS","t":7},{"code":"300373","name":"扬杰科技","en":null,"market":"CN","kind":"stock","yf":"300373.SZ","t":7},{"code":"600360","name":"华微电子","en":null,"market":"CN","kind":"stock","yf":"600360.SS","t":7},{"code":"300623","name":"捷捷微电","en":null,"market":"CN","kind":"stock","yf":"300623.SZ","t":7},{"code":"605111","name":"新洁能","en":null,"market":"CN","kind":"stock","yf":"605111.SS","t":7},{"code":"688689","name":"银河微电","en":null,"market":"CN","kind":"stock","yf":"688689.SS","t":7},{"code":"688261","name":"东微半导","en":null,"market":"CN","kind":"stock","yf":"688261.SS","t":7},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":7},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":7},{"code":"SOXQ","name":"Invesco半导体ETF","en":"Invesco PHLX Semiconductor ETF","market":"US","kind":"etf","yf":"SOXQ","t":7},{"code":"EWT","name":"iShares台湾ETF","en":"iShares MSCI Taiwan ETF","market":"US","kind":"etf","yf":"EWT","t":7},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":7},{"code":"AMKR","name":"Amkor","en":"Amkor Technology","market":"US","kind":"stock","yf":"AMKR","t":8},{"code":"ASX","name":"日月光","en":"ASE Technology","market":"US","kind":"stock","yf":"ASX","t":8},{"code":"ONTO","name":"Onto","en":"Onto Innovation","market":"US","kind":"stock","yf":"ONTO","t":8},{"code":"KLIC","name":"库力索法","en":"Kulicke & Soffa","market":"US","kind":"stock","yf":"KLIC","t":8},{"code":"COHU","name":"Cohu","en":"Cohu","market":"US","kind":"stock","yf":"COHU","t":8},{"code":"FORM","name":"FormFactor","en":"FormFactor","market":"US","kind":"stock","yf":"FORM","t":8},{"code":"CAMT","name":"Camtek","en":"Camtek","market":"US","kind":"stock","yf":"CAMT","t":8},{"code":"TER","name":"泰瑞达","en":"Teradyne","market":"US","kind":"stock","yf":"TER","t":8},{"code":"NVMI","name":"Nova","en":"Nova","market":"US","kind":"stock","yf":"NVMI","t":8},{"code":"AEHR","name":"Aehr","en":"Aehr Test Systems","market":"US","kind":"stock","yf":"AEHR","t":8},{"code":"UCTT","name":"Ultra Clean","en":"Ultra Clean","market":"US","kind":"stock","yf":"UCTT","t":8},{"code":"ICHR","name":"Ichor","en":"Ichor","market":"US","kind":"stock","yf":"ICHR","t":8},{"code":"ACLS","name":"Axcelis","en":"Axcelis","market":"US","kind":"stock","yf":"ACLS","t":8},{"code":"KLAC","name":"科磊","en":"KLA","market":"US","kind":"stock","yf":"KLAC","t":8},{"code":"LRCX","name":"泛林","en":"Lam Research","market":"US","kind":"stock","yf":"LRCX","t":8},{"code":"600584","name":"长电科技","en":null,"market":"CN","kind":"stock","yf":"600584.SS","t":8},{"code":"002156","name":"通富微电","en":null,"market":"CN","kind":"stock","yf":"002156.SZ","t":8},{"code":"002185","name":"华天科技","en":null,"market":"CN","kind":"stock","yf":"002185.SZ","t":8},{"code":"688362","name":"甬矽电子","en":null,"market":"CN","kind":"stock","yf":"688362.SS","t":8},{"code":"603005","name":"晶方科技","en":null,"market":"CN","kind":"stock","yf":"603005.SS","t":8},{"code":"688372","name":"伟测科技","en":null,"market":"CN","kind":"stock","yf":"688372.SS","t":8},{"code":"688135","name":"利扬芯片","en":null,"market":"CN","kind":"stock","yf":"688135.SS","t":8},{"code":"688352","name":"颀中科技","en":null,"market":"CN","kind":"stock","yf":"688352.SS","t":8},{"code":"688175","name":"气派科技","en":null,"market":"CN","kind":"stock","yf":"688175.SS","t":8},{"code":"000021","name":"深科技","en":null,"market":"CN","kind":"stock","yf":"000021.SZ","t":8},{"code":"688200","name":"华峰测控","en":null,"market":"CN","kind":"stock","yf":"688200.SS","t":8},{"code":"300604","name":"长川科技","en":null,"market":"CN","kind":"stock","yf":"300604.SZ","t":8},{"code":"301348","name":"蓝箭电子","en":null,"market":"CN","kind":"stock","yf":"301348.SZ","t":8},{"code":"688403","name":"汇成股份","en":null,"market":"CN","kind":"stock","yf":"688403.SS","t":8},{"code":"002077","name":"大港股份","en":null,"market":"CN","kind":"stock","yf":"002077.SZ","t":8},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":8},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":8},{"code":"SOXQ","name":"Invesco半导体ETF","en":"Invesco PHLX Semiconductor ETF","market":"US","kind":"etf","yf":"SOXQ","t":8},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":8},{"code":"512480","name":"半导体ETF","en":null,"market":"CN","kind":"etf","yf":"512480.SS","t":8},{"code":"DELL","name":"戴尔","en":"Dell","market":"US","kind":"stock","yf":"DELL","t":9},{"code":"SMCI","name":"超微电脑","en":"Super Micro","market":"US","kind":"stock","yf":"SMCI","t":9},{"code":"HPE","name":"慧与","en":"HPE","market":"US","kind":"stock","yf":"HPE","t":9},{"code":"CLS","name":"Celestica","en":"Celestica","market":"US","kind":"stock","yf":"CLS","t":9},{"code":"SANM","name":"Sanmina","en":"Sanmina","market":"US","kind":"stock","yf":"SANM","t":9},{"code":"FLEX","name":"Flex","en":"Flex","market":"US","kind":"stock","yf":"FLEX","t":9},{"code":"SGH","name":"Penguin Solutions","en":"Penguin Solutions","market":"US","kind":"stock","yf":"SGH","t":9},{"code":"PSTG","name":"Pure Storage","en":"Pure Storage","market":"US","kind":"stock","yf":"PSTG","t":9},{"code":"NTAP","name":"NetApp","en":"NetApp","market":"US","kind":"stock","yf":"NTAP","t":9},{"code":"IBM","name":"IBM","en":"IBM","market":"US","kind":"stock","yf":"IBM","t":9},{"code":"CRWV","name":"CoreWeave","en":"CoreWeave","market":"US","kind":"stock","yf":"CRWV","t":9},{"code":"NVDA","name":"英伟达","en":"NVIDIA","market":"US","kind":"stock","yf":"NVDA","t":9},{"code":"AVGO","name":"博通","en":"Broadcom","market":"US","kind":"stock","yf":"AVGO","t":9},{"code":"ANET","name":"Arista","en":"Arista Networks","market":"US","kind":"stock","yf":"ANET","t":9},{"code":"JBL","name":"Jabil","en":"Jabil","market":"US","kind":"stock","yf":"JBL","t":9},{"code":"601138","name":"工业富联","en":null,"market":"CN","kind":"stock","yf":"601138.SS","t":9},{"code":"000977","name":"浪潮信息","en":null,"market":"CN","kind":"stock","yf":"000977.SZ","t":9},{"code":"603019","name":"中科曙光","en":null,"market":"CN","kind":"stock","yf":"603019.SS","t":9},{"code":"000938","name":"紫光股份","en":null,"market":"CN","kind":"stock","yf":"000938.SZ","t":9},{"code":"000034","name":"神州数码","en":null,"market":"CN","kind":"stock","yf":"000034.SZ","t":9},{"code":"603296","name":"华勤技术","en":null,"market":"CN","kind":"stock","yf":"603296.SS","t":9},{"code":"002261","name":"拓维信息","en":null,"market":"CN","kind":"stock","yf":"002261.SZ","t":9},{"code":"301236","name":"软通动力","en":null,"market":"CN","kind":"stock","yf":"301236.SZ","t":9},{"code":"600100","name":"同方股份","en":null,"market":"CN","kind":"stock","yf":"600100.SS","t":9},{"code":"688256","name":"寒武纪","en":null,"market":"CN","kind":"stock","yf":"688256.SS","t":9},{"code":"600498","name":"烽火通信","en":null,"market":"CN","kind":"stock","yf":"600498.SS","t":9},{"code":"600839","name":"四川长虹","en":null,"market":"CN","kind":"stock","yf":"600839.SS","t":9},{"code":"300002","name":"神州泰岳","en":null,"market":"CN","kind":"stock","yf":"300002.SZ","t":9},{"code":"000628","name":"高新发展","en":null,"market":"CN","kind":"stock","yf":"000628.SZ","t":9},{"code":"002474","name":"榕基软件","en":null,"market":"CN","kind":"stock","yf":"002474.SZ","t":9},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":9},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":9},{"code":"QQQ","name":"Invesco纳指100","en":"Invesco QQQ","market":"US","kind":"etf","yf":"QQQ","t":9},{"code":"159890","name":"云计算ETF","en":null,"market":"CN","kind":"etf","yf":"159890.SZ","t":9},{"code":"IGV","name":"iShares软件ETF","en":"iShares Expanded Tech-Software ETF","market":"US","kind":"etf","yf":"IGV","t":9},{"code":"VRT","name":"Vertiv","en":"Vertiv","market":"US","kind":"stock","yf":"VRT","t":10},{"code":"EQIX","name":"Equinix","en":"Equinix","market":"US","kind":"stock","yf":"EQIX","t":10},{"code":"DLR","name":"Digital Realty","en":"Digital Realty","market":"US","kind":"stock","yf":"DLR","t":10},{"code":"ETN","name":"伊顿","en":"Eaton","market":"US","kind":"stock","yf":"ETN","t":10},{"code":"GEV","name":"GE Vernova","en":"GE Vernova","market":"US","kind":"stock","yf":"GEV","t":10},{"code":"MPWR","name":"Monolithic Power","en":"Monolithic Power","market":"US","kind":"stock","yf":"MPWR","t":10},{"code":"NVT","name":"nVent","en":"nVent Electric","market":"US","kind":"stock","yf":"NVT","t":10},{"code":"CRWV","name":"CoreWeave","en":"CoreWeave","market":"US","kind":"stock","yf":"CRWV","t":10},{"code":"IRM","name":"Iron Mountain","en":"Iron Mountain","market":"US","kind":"stock","yf":"IRM","t":10},{"code":"PWR","name":"Quanta","en":"Quanta Services","market":"US","kind":"stock","yf":"PWR","t":10},{"code":"SMCI","name":"超微电脑","en":"Super Micro","market":"US","kind":"stock","yf":"SMCI","t":10},{"code":"DELL","name":"戴尔","en":"Dell","market":"US","kind":"stock","yf":"DELL","t":10},{"code":"CEG","name":"星座能源","en":"Constellation Energy","market":"US","kind":"stock","yf":"CEG","t":10},{"code":"VST","name":"Vistra","en":"Vistra","market":"US","kind":"stock","yf":"VST","t":10},{"code":"ANET","name":"Arista","en":"Arista Networks","market":"US","kind":"stock","yf":"ANET","t":10},{"code":"002837","name":"英维克","en":null,"market":"CN","kind":"stock","yf":"002837.SZ","t":10},{"code":"300442","name":"润泽科技","en":null,"market":"CN","kind":"stock","yf":"300442.SZ","t":10},{"code":"002335","name":"科华数据","en":null,"market":"CN","kind":"stock","yf":"002335.SZ","t":10},{"code":"872808","name":"曙光数创","en":null,"market":"CN","kind":"stock","yf":"872808.BJ","t":10},{"code":"301018","name":"申菱环境","en":null,"market":"CN","kind":"stock","yf":"301018.SZ","t":10},{"code":"300383","name":"光环新网","en":null,"market":"CN","kind":"stock","yf":"300383.SZ","t":10},{"code":"603881","name":"数据港","en":null,"market":"CN","kind":"stock","yf":"603881.SS","t":10},{"code":"300738","name":"奥飞数据","en":null,"market":"CN","kind":"stock","yf":"300738.SZ","t":10},{"code":"600845","name":"宝信软件","en":null,"market":"CN","kind":"stock","yf":"600845.SS","t":10},{"code":"300499","name":"高澜股份","en":null,"market":"CN","kind":"stock","yf":"300499.SZ","t":10},{"code":"300017","name":"网宿科技","en":null,"market":"CN","kind":"stock","yf":"300017.SZ","t":10},{"code":"300249","name":"依米康","en":null,"market":"CN","kind":"stock","yf":"300249.SZ","t":10},{"code":"300990","name":"同飞股份","en":null,"market":"CN","kind":"stock","yf":"300990.SZ","t":10},{"code":"603912","name":"佳力图","en":null,"market":"CN","kind":"stock","yf":"603912.SS","t":10},{"code":"603887","name":"城地香江","en":null,"market":"CN","kind":"stock","yf":"603887.SS","t":10},{"code":"DTCR","name":"Global X数据中心REIT","en":"Global X Data Center REITs ETF","market":"US","kind":"etf","yf":"DTCR","t":10},{"code":"AIPO","name":"AI+电力基建ETF","en":"AI Infrastructure & Power ETF","market":"US","kind":"etf","yf":"AIPO","t":10},{"code":"SRVR","name":"Pacer数据基建ETF","en":"Pacer Data & Infrastructure ETF","market":"US","kind":"etf","yf":"SRVR","t":10},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":10},{"code":"GRID","name":"First Trust电网ETF","en":"First Trust Clean Edge Grid ETF","market":"US","kind":"etf","yf":"GRID","t":10},{"code":"TTMI","name":"TTM Technologies","en":"TTM Technologies","market":"US","kind":"stock","yf":"TTMI","t":11},{"code":"ROG","name":"Rogers","en":"Rogers","market":"US","kind":"stock","yf":"ROG","t":11},{"code":"DD","name":"杜邦","en":"DuPont","market":"US","kind":"stock","yf":"DD","t":11},{"code":"CLS","name":"Celestica","en":"Celestica","market":"US","kind":"stock","yf":"CLS","t":11},{"code":"FLEX","name":"Flex","en":"Flex","market":"US","kind":"stock","yf":"FLEX","t":11},{"code":"JBL","name":"Jabil","en":"Jabil","market":"US","kind":"stock","yf":"JBL","t":11},{"code":"SANM","name":"Sanmina","en":"Sanmina","market":"US","kind":"stock","yf":"SANM","t":11},{"code":"PLXS","name":"Plexus","en":"Plexus","market":"US","kind":"stock","yf":"PLXS","t":11},{"code":"MTRN","name":"Materion","en":"Materion","market":"US","kind":"stock","yf":"MTRN","t":11},{"code":"BHE","name":"Benchmark","en":"Benchmark Electronics","market":"US","kind":"stock","yf":"BHE","t":11},{"code":"APH","name":"安费诺","en":"Amphenol","market":"US","kind":"stock","yf":"APH","t":11},{"code":"GLW","name":"康宁","en":"Corning","market":"US","kind":"stock","yf":"GLW","t":11},{"code":"COHR","name":"Coherent","en":"Coherent","market":"US","kind":"stock","yf":"COHR","t":11},{"code":"FN","name":"Fabrinet","en":"Fabrinet","market":"US","kind":"stock","yf":"FN","t":11},{"code":"NVT","name":"nVent","en":"nVent Electric","market":"US","kind":"stock","yf":"NVT","t":11},{"code":"002463","name":"沪电股份","en":null,"market":"CN","kind":"stock","yf":"002463.SZ","t":11},{"code":"600183","name":"生益科技","en":null,"market":"CN","kind":"stock","yf":"600183.SS","t":11},{"code":"002916","name":"深南电路","en":null,"market":"CN","kind":"stock","yf":"002916.SZ","t":11},{"code":"300476","name":"胜宏科技","en":null,"market":"CN","kind":"stock","yf":"300476.SZ","t":11},{"code":"002436","name":"兴森科技","en":null,"market":"CN","kind":"stock","yf":"002436.SZ","t":11},{"code":"603228","name":"景旺电子","en":null,"market":"CN","kind":"stock","yf":"603228.SS","t":11},{"code":"688519","name":"南亚新材","en":null,"market":"CN","kind":"stock","yf":"688519.SS","t":11},{"code":"603920","name":"世运电路","en":null,"market":"CN","kind":"stock","yf":"603920.SS","t":11},{"code":"002636","name":"金安国纪","en":null,"market":"CN","kind":"stock","yf":"002636.SZ","t":11},{"code":"688020","name":"方邦股份","en":null,"market":"CN","kind":"stock","yf":"688020.SS","t":11},{"code":"002384","name":"东山精密","en":null,"market":"CN","kind":"stock","yf":"002384.SZ","t":11},{"code":"002938","name":"鹏鼎控股","en":null,"market":"CN","kind":"stock","yf":"002938.SZ","t":11},{"code":"001389","name":"广合科技","en":null,"market":"CN","kind":"stock","yf":"001389.SZ","t":11},{"code":"002815","name":"崇达技术","en":null,"market":"CN","kind":"stock","yf":"002815.SZ","t":11},{"code":"000823","name":"超声电子","en":null,"market":"CN","kind":"stock","yf":"000823.SZ","t":11},{"code":"SMH","name":"VanEck半导体ETF","en":"VanEck Semiconductor ETF","market":"US","kind":"etf","yf":"SMH","t":11},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":11},{"code":"515260","name":"电子ETF","en":null,"market":"CN","kind":"etf","yf":"515260.SS","t":11},{"code":"515880","name":"通信ETF","en":null,"market":"CN","kind":"etf","yf":"515880.SS","t":11},{"code":"159995","name":"芯片ETF","en":null,"market":"CN","kind":"etf","yf":"159995.SZ","t":11},{"code":"MSFT","name":"微软","en":"Microsoft","market":"US","kind":"stock","yf":"MSFT","t":12},{"code":"GOOGL","name":"谷歌","en":"Alphabet","market":"US","kind":"stock","yf":"GOOGL","t":12},{"code":"AMZN","name":"亚马逊","en":"Amazon","market":"US","kind":"stock","yf":"AMZN","t":12},{"code":"META","name":"Meta","en":"Meta","market":"US","kind":"stock","yf":"META","t":12},{"code":"AAPL","name":"苹果","en":"Apple","market":"US","kind":"stock","yf":"AAPL","t":12},{"code":"ORCL","name":"甲骨文","en":"Oracle","market":"US","kind":"stock","yf":"ORCL","t":12},{"code":"NOW","name":"ServiceNow","en":"ServiceNow","market":"US","kind":"stock","yf":"NOW","t":12},{"code":"CRM","name":"Salesforce","en":"Salesforce","market":"US","kind":"stock","yf":"CRM","t":12},{"code":"SAP","name":"SAP","en":"SAP","market":"US","kind":"stock","yf":"SAP","t":12},{"code":"IBM","name":"IBM","en":"IBM","market":"US","kind":"stock","yf":"IBM","t":12},{"code":"ADBE","name":"Adobe","en":"Adobe","market":"US","kind":"stock","yf":"ADBE","t":12},{"code":"CSCO","name":"思科","en":"Cisco","market":"US","kind":"stock","yf":"CSCO","t":12},{"code":"ACN","name":"埃森哲","en":"Accenture","market":"US","kind":"stock","yf":"ACN","t":12},{"code":"INTU","name":"Intuit","en":"Intuit","market":"US","kind":"stock","yf":"INTU","t":12},{"code":"UBER","name":"优步","en":"Uber","market":"US","kind":"stock","yf":"UBER","t":12},{"code":"SHOP","name":"Shopify","en":"Shopify","market":"US","kind":"stock","yf":"SHOP","t":12},{"code":"WDAY","name":"Workday","en":"Workday","market":"US","kind":"stock","yf":"WDAY","t":12},{"code":"TEAM","name":"Atlassian","en":"Atlassian","market":"US","kind":"stock","yf":"TEAM","t":12},{"code":"SNOW","name":"Snowflake","en":"Snowflake","market":"US","kind":"stock","yf":"SNOW","t":12},{"code":"PANW","name":"Palo Alto","en":"Palo Alto Networks","market":"US","kind":"stock","yf":"PANW","t":12},{"code":"688111","name":"金山办公","en":null,"market":"CN","kind":"stock","yf":"688111.SS","t":12},{"code":"600588","name":"用友网络","en":null,"market":"CN","kind":"stock","yf":"600588.SS","t":12},{"code":"002230","name":"科大讯飞","en":null,"market":"CN","kind":"stock","yf":"002230.SZ","t":12},{"code":"600570","name":"恒生电子","en":null,"market":"CN","kind":"stock","yf":"600570.SS","t":12},{"code":"002410","name":"广联达","en":null,"market":"CN","kind":"stock","yf":"002410.SZ","t":12},{"code":"603039","name":"泛微网络","en":null,"market":"CN","kind":"stock","yf":"603039.SS","t":12},{"code":"688369","name":"致远互联","en":null,"market":"CN","kind":"stock","yf":"688369.SS","t":12},{"code":"300059","name":"东方财富","en":null,"market":"CN","kind":"stock","yf":"300059.SZ","t":12},{"code":"300033","name":"同花顺","en":null,"market":"CN","kind":"stock","yf":"300033.SZ","t":12},{"code":"000032","name":"深桑达","en":null,"market":"CN","kind":"stock","yf":"000032.SZ","t":12},{"code":"300253","name":"卫宁健康","en":null,"market":"CN","kind":"stock","yf":"300253.SZ","t":12},{"code":"688066","name":"航天宏图","en":null,"market":"CN","kind":"stock","yf":"688066.SS","t":12},{"code":"688031","name":"星环科技","en":null,"market":"CN","kind":"stock","yf":"688031.SS","t":12},{"code":"688158","name":"优刻得","en":null,"market":"CN","kind":"stock","yf":"688158.SS","t":12},{"code":"688316","name":"青云科技","en":null,"market":"CN","kind":"stock","yf":"688316.SS","t":12},{"code":"688058","name":"宝兰德","en":null,"market":"CN","kind":"stock","yf":"688058.SS","t":12},{"code":"603138","name":"海量数据","en":null,"market":"CN","kind":"stock","yf":"603138.SS","t":12},{"code":"688095","name":"福昕软件","en":null,"market":"CN","kind":"stock","yf":"688095.SS","t":12},{"code":"300634","name":"彩讯股份","en":null,"market":"CN","kind":"stock","yf":"300634.SZ","t":12},{"code":"300339","name":"润和软件","en":null,"market":"CN","kind":"stock","yf":"300339.SZ","t":12},{"code":"QQQ","name":"Invesco纳指100","en":"Invesco QQQ","market":"US","kind":"etf","yf":"QQQ","t":12},{"code":"IGV","name":"iShares软件ETF","en":"iShares Software ETF","market":"US","kind":"etf","yf":"IGV","t":12},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":12},{"code":"SKYY","name":"First Trust云计算ETF","en":"First Trust Cloud Computing ETF","market":"US","kind":"etf","yf":"SKYY","t":12},{"code":"159939","name":"信息技术ETF","en":null,"market":"CN","kind":"etf","yf":"159939.SZ","t":12},{"code":"PLTR","name":"Palantir","en":"Palantir","market":"US","kind":"stock","yf":"PLTR","t":13},{"code":"SNOW","name":"Snowflake","en":"Snowflake","market":"US","kind":"stock","yf":"SNOW","t":13},{"code":"DDOG","name":"Datadog","en":"Datadog","market":"US","kind":"stock","yf":"DDOG","t":13},{"code":"CRWD","name":"CrowdStrike","en":"CrowdStrike","market":"US","kind":"stock","yf":"CRWD","t":13},{"code":"NET","name":"Cloudflare","en":"Cloudflare","market":"US","kind":"stock","yf":"NET","t":13},{"code":"MDB","name":"MongoDB","en":"MongoDB","market":"US","kind":"stock","yf":"MDB","t":13},{"code":"U","name":"Unity","en":"Unity","market":"US","kind":"stock","yf":"U","t":13},{"code":"PATH","name":"UiPath","en":"UiPath","market":"US","kind":"stock","yf":"PATH","t":13},{"code":"AI","name":"C3.ai","en":"C3.ai","market":"US","kind":"stock","yf":"AI","t":13},{"code":"ESTC","name":"Elastic","en":"Elastic","market":"US","kind":"stock","yf":"ESTC","t":13},{"code":"ZS","name":"Zscaler","en":"Zscaler","market":"US","kind":"stock","yf":"ZS","t":13},{"code":"S","name":"SentinelOne","en":"SentinelOne","market":"US","kind":"stock","yf":"S","t":13},{"code":"GTLB","name":"GitLab","en":"GitLab","market":"US","kind":"stock","yf":"GTLB","t":13},{"code":"HUBS","name":"HubSpot","en":"HubSpot","market":"US","kind":"stock","yf":"HUBS","t":13},{"code":"APP","name":"AppLovin","en":"AppLovin","market":"US","kind":"stock","yf":"APP","t":13},{"code":"DOCN","name":"DigitalOcean","en":"DigitalOcean","market":"US","kind":"stock","yf":"DOCN","t":13},{"code":"FROG","name":"JFrog","en":"JFrog","market":"US","kind":"stock","yf":"FROG","t":13},{"code":"BRZE","name":"Braze","en":"Braze","market":"US","kind":"stock","yf":"BRZE","t":13},{"code":"CFLT","name":"Confluent","en":"Confluent","market":"US","kind":"stock","yf":"CFLT","t":13},{"code":"PCOR","name":"Procore","en":"Procore","market":"US","kind":"stock","yf":"PCOR","t":13},{"code":"300624","name":"万兴科技","en":null,"market":"CN","kind":"stock","yf":"300624.SZ","t":13},{"code":"688088","name":"虹软科技","en":null,"market":"CN","kind":"stock","yf":"688088.SS","t":13},{"code":"688327","name":"云从科技","en":null,"market":"CN","kind":"stock","yf":"688327.SS","t":13},{"code":"688207","name":"格灵深瞳","en":null,"market":"CN","kind":"stock","yf":"688207.SS","t":13},{"code":"300229","name":"拓尔思","en":null,"market":"CN","kind":"stock","yf":"300229.SZ","t":13},{"code":"002362","name":"汉王科技","en":null,"market":"CN","kind":"stock","yf":"002362.SZ","t":13},{"code":"300678","name":"中科信息","en":null,"market":"CN","kind":"stock","yf":"300678.SZ","t":13},{"code":"688590","name":"新致软件","en":null,"market":"CN","kind":"stock","yf":"688590.SS","t":13},{"code":"601360","name":"三六零","en":null,"market":"CN","kind":"stock","yf":"601360.SS","t":13},{"code":"300418","name":"昆仑万维","en":null,"market":"CN","kind":"stock","yf":"300418.SZ","t":13},{"code":"688588","name":"凌志软件","en":null,"market":"CN","kind":"stock","yf":"688588.SS","t":13},{"code":"300378","name":"鼎捷软件","en":null,"market":"CN","kind":"stock","yf":"300378.SZ","t":13},{"code":"300687","name":"赛意信息","en":null,"market":"CN","kind":"stock","yf":"300687.SZ","t":13},{"code":"688229","name":"博睿数据","en":null,"market":"CN","kind":"stock","yf":"688229.SS","t":13},{"code":"300451","name":"创业慧康","en":null,"market":"CN","kind":"stock","yf":"300451.SZ","t":13},{"code":"002777","name":"久远银海","en":null,"market":"CN","kind":"stock","yf":"002777.SZ","t":13},{"code":"300339","name":"润和软件","en":null,"market":"CN","kind":"stock","yf":"300339.SZ","t":13},{"code":"688201","name":"信安世纪","en":null,"market":"CN","kind":"stock","yf":"688201.SS","t":13},{"code":"300634","name":"彩讯股份","en":null,"market":"CN","kind":"stock","yf":"300634.SZ","t":13},{"code":"300271","name":"华宇软件","en":null,"market":"CN","kind":"stock","yf":"300271.SZ","t":13},{"code":"WCLD","name":"WisdomTree云软件ETF","en":"WisdomTree Cloud Computing ETF","market":"US","kind":"etf","yf":"WCLD","t":13},{"code":"IGV","name":"iShares软件ETF","en":"iShares Software ETF","market":"US","kind":"etf","yf":"IGV","t":13},{"code":"AIQ","name":"Global X AI ETF","en":"Global X AI & Tech ETF","market":"US","kind":"etf","yf":"AIQ","t":13},{"code":"BOTZ","name":"Global X机器人AI ETF","en":"Global X Robotics & AI ETF","market":"US","kind":"etf","yf":"BOTZ","t":13},{"code":"159852","name":"软件ETF","en":null,"market":"CN","kind":"etf","yf":"159852.SZ","t":13},{"code":"TSLA","name":"特斯拉","en":"Tesla","market":"US","kind":"stock","yf":"TSLA","t":14},{"code":"ISRG","name":"直觉外科","en":"Intuitive Surgical","market":"US","kind":"stock","yf":"ISRG","t":14},{"code":"ROK","name":"罗克韦尔","en":"Rockwell Automation","market":"US","kind":"stock","yf":"ROK","t":14},{"code":"SYM","name":"Symbotic","en":"Symbotic","market":"US","kind":"stock","yf":"SYM","t":14},{"code":"ZBRA","name":"斑马技术","en":"Zebra","market":"US","kind":"stock","yf":"ZBRA","t":14},{"code":"IRBT","name":"iRobot","en":"iRobot","market":"US","kind":"stock","yf":"IRBT","t":14},{"code":"HON","name":"霍尼韦尔","en":"Honeywell","market":"US","kind":"stock","yf":"HON","t":14},{"code":"EMR","name":"艾默生","en":"Emerson","market":"US","kind":"stock","yf":"EMR","t":14},{"code":"ROP","name":"Roper","en":"Roper","market":"US","kind":"stock","yf":"ROP","t":14},{"code":"AME","name":"AMETEK","en":"AMETEK","market":"US","kind":"stock","yf":"AME","t":14},{"code":"DE","name":"迪尔","en":"Deere","market":"US","kind":"stock","yf":"DE","t":14},{"code":"PH","name":"派克汉尼汾","en":"Parker Hannifin","market":"US","kind":"stock","yf":"PH","t":14},{"code":"NDSN","name":"诺信","en":"Nordson","market":"US","kind":"stock","yf":"NDSN","t":14},{"code":"CGNX","name":"康耐视","en":"Cognex","market":"US","kind":"stock","yf":"CGNX","t":14},{"code":"AVAV","name":"AeroVironment","en":"AeroVironment","market":"US","kind":"stock","yf":"AVAV","t":14},{"code":"300124","name":"汇川技术","en":null,"market":"CN","kind":"stock","yf":"300124.SZ","t":14},{"code":"002747","name":"埃斯顿","en":null,"market":"CN","kind":"stock","yf":"002747.SZ","t":14},{"code":"688017","name":"绿的谐波","en":null,"market":"CN","kind":"stock","yf":"688017.SS","t":14},{"code":"688305","name":"科德数控","en":null,"market":"CN","kind":"stock","yf":"688305.SS","t":14},{"code":"601689","name":"拓普集团","en":null,"market":"CN","kind":"stock","yf":"601689.SS","t":14},{"code":"002050","name":"三花智控","en":null,"market":"CN","kind":"stock","yf":"002050.SZ","t":14},{"code":"603728","name":"鸣志电器","en":null,"market":"CN","kind":"stock","yf":"603728.SS","t":14},{"code":"688160","name":"步科股份","en":null,"market":"CN","kind":"stock","yf":"688160.SS","t":14},{"code":"002979","name":"雷赛智能","en":null,"market":"CN","kind":"stock","yf":"002979.SZ","t":14},{"code":"688320","name":"禾川科技","en":null,"market":"CN","kind":"stock","yf":"688320.SS","t":14},{"code":"603667","name":"五洲新春","en":null,"market":"CN","kind":"stock","yf":"603667.SS","t":14},{"code":"002472","name":"双环传动","en":null,"market":"CN","kind":"stock","yf":"002472.SZ","t":14},{"code":"002896","name":"中大力德","en":null,"market":"CN","kind":"stock","yf":"002896.SZ","t":14},{"code":"300503","name":"昊志机电","en":null,"market":"CN","kind":"stock","yf":"300503.SZ","t":14},{"code":"688188","name":"柏楚电子","en":null,"market":"CN","kind":"stock","yf":"688188.SS","t":14},{"code":"603416","name":"信捷电气","en":null,"market":"CN","kind":"stock","yf":"603416.SS","t":14},{"code":"300024","name":"机器人","en":null,"market":"CN","kind":"stock","yf":"300024.SZ","t":14},{"code":"300660","name":"江苏雷利","en":null,"market":"CN","kind":"stock","yf":"300660.SZ","t":14},{"code":"003021","name":"兆威机电","en":null,"market":"CN","kind":"stock","yf":"003021.SZ","t":14},{"code":"301368","name":"丰立智能","en":null,"market":"CN","kind":"stock","yf":"301368.SZ","t":14},{"code":"BOTZ","name":"Global X机器人AI ETF","en":"Global X Robotics & AI ETF","market":"US","kind":"etf","yf":"BOTZ","t":14},{"code":"ROBO","name":"ROBO Global机器人ETF","en":"ROBO Global Robotics ETF","market":"US","kind":"etf","yf":"ROBO","t":14},{"code":"IRBO","name":"iShares机器人AI ETF","en":"iShares Robotics & AI ETF","market":"US","kind":"etf","yf":"IRBO","t":14},{"code":"562500","name":"机器人ETF","en":null,"market":"CN","kind":"etf","yf":"562500.SS","t":14},{"code":"159770","name":"机器人ETF","en":null,"market":"CN","kind":"etf","yf":"159770.SZ","t":14},{"code":"TSLA","name":"特斯拉","en":"Tesla","market":"US","kind":"stock","yf":"TSLA","t":15},{"code":"NIO","name":"蔚来","en":"NIO","market":"US","kind":"stock","yf":"NIO","t":15},{"code":"XPEV","name":"小鹏","en":"XPeng","market":"US","kind":"stock","yf":"XPEV","t":15},{"code":"LI","name":"理想","en":"Li Auto","market":"US","kind":"stock","yf":"LI","t":15},{"code":"RIVN","name":"Rivian","en":"Rivian","market":"US","kind":"stock","yf":"RIVN","t":15},{"code":"LCID","name":"Lucid","en":"Lucid","market":"US","kind":"stock","yf":"LCID","t":15},{"code":"MBLY","name":"Mobileye","en":"Mobileye","market":"US","kind":"stock","yf":"MBLY","t":15},{"code":"GM","name":"通用","en":"General Motors","market":"US","kind":"stock","yf":"GM","t":15},{"code":"F","name":"福特","en":"Ford","market":"US","kind":"stock","yf":"F","t":15},{"code":"APTV","name":"安波福","en":"Aptiv","market":"US","kind":"stock","yf":"APTV","t":15},{"code":"ALV","name":"奥托立夫","en":"Autoliv","market":"US","kind":"stock","yf":"ALV","t":15},{"code":"LAZR","name":"Luminar","en":"Luminar","market":"US","kind":"stock","yf":"LAZR","t":15},{"code":"INDI","name":"indie半导体","en":"indie Semiconductor","market":"US","kind":"stock","yf":"INDI","t":15},{"code":"QS","name":"QuantumScape","en":"QuantumScape","market":"US","kind":"stock","yf":"QS","t":15},{"code":"VC","name":"Visteon","en":"Visteon","market":"US","kind":"stock","yf":"VC","t":15},{"code":"002594","name":"比亚迪","en":null,"market":"CN","kind":"stock","yf":"002594.SZ","t":15},{"code":"002920","name":"德赛西威","en":null,"market":"CN","kind":"stock","yf":"002920.SZ","t":15},{"code":"300496","name":"中科创达","en":null,"market":"CN","kind":"stock","yf":"300496.SZ","t":15},{"code":"688326","name":"经纬恒润","en":null,"market":"CN","kind":"stock","yf":"688326.SS","t":15},{"code":"600699","name":"均胜电子","en":null,"market":"CN","kind":"stock","yf":"600699.SS","t":15},{"code":"603596","name":"伯特利","en":null,"market":"CN","kind":"stock","yf":"603596.SS","t":15},{"code":"603197","name":"保隆科技","en":null,"market":"CN","kind":"stock","yf":"603197.SS","t":15},{"code":"002906","name":"华阳集团","en":null,"market":"CN","kind":"stock","yf":"002906.SZ","t":15},{"code":"603786","name":"科博达","en":null,"market":"CN","kind":"stock","yf":"603786.SS","t":15},{"code":"603348","name":"文灿股份","en":null,"market":"CN","kind":"stock","yf":"603348.SS","t":15},{"code":"301221","name":"光庭信息","en":null,"market":"CN","kind":"stock","yf":"301221.SZ","t":15},{"code":"002405","name":"四维图新","en":null,"market":"CN","kind":"stock","yf":"002405.SZ","t":15},{"code":"002151","name":"北斗星通","en":null,"market":"CN","kind":"stock","yf":"002151.SZ","t":15},{"code":"601127","name":"赛力斯","en":null,"market":"CN","kind":"stock","yf":"601127.SS","t":15},{"code":"000625","name":"长安汽车","en":null,"market":"CN","kind":"stock","yf":"000625.SZ","t":15},{"code":"601238","name":"广汽集团","en":null,"market":"CN","kind":"stock","yf":"601238.SS","t":15},{"code":"601633","name":"长城汽车","en":null,"market":"CN","kind":"stock","yf":"601633.SS","t":15},{"code":"600418","name":"江淮汽车","en":null,"market":"CN","kind":"stock","yf":"600418.SS","t":15},{"code":"002284","name":"亚太股份","en":null,"market":"CN","kind":"stock","yf":"002284.SZ","t":15},{"code":"688256","name":"寒武纪","en":null,"market":"CN","kind":"stock","yf":"688256.SS","t":15},{"code":"DRIV","name":"Global X自动驾驶EV ETF","en":"Global X Autonomous & EV ETF","market":"US","kind":"etf","yf":"DRIV","t":15},{"code":"IDRV","name":"iShares自动驾驶EV ETF","en":"iShares Self-Driving EV & Tech ETF","market":"US","kind":"etf","yf":"IDRV","t":15},{"code":"KARS","name":"KraneShares电动车ETF","en":"KraneShares Electric Vehicles ETF","market":"US","kind":"etf","yf":"KARS","t":15},{"code":"515030","name":"新能源车ETF","en":null,"market":"CN","kind":"etf","yf":"515030.SS","t":15},{"code":"159637","name":"新能源车龙头ETF","en":null,"market":"CN","kind":"etf","yf":"159637.SZ","t":15},{"code":"VST","name":"Vistra","en":"Vistra","market":"US","kind":"stock","yf":"VST","t":16},{"code":"CEG","name":"星座能源","en":"Constellation Energy","market":"US","kind":"stock","yf":"CEG","t":16},{"code":"NRG","name":"NRG能源","en":"NRG Energy","market":"US","kind":"stock","yf":"NRG","t":16},{"code":"TLN","name":"Talen能源","en":"Talen Energy","market":"US","kind":"stock","yf":"TLN","t":16},{"code":"GE","name":"通用电气","en":"GE Aerospace","market":"US","kind":"stock","yf":"GE","t":16},{"code":"NEE","name":"新纪元能源","en":"NextEra Energy","market":"US","kind":"stock","yf":"NEE","t":16},{"code":"SO","name":"南方电力","en":"Southern Company","market":"US","kind":"stock","yf":"SO","t":16},{"code":"DUK","name":"杜克能源","en":"Duke Energy","market":"US","kind":"stock","yf":"DUK","t":16},{"code":"FSLR","name":"First Solar","en":"First Solar","market":"US","kind":"stock","yf":"FSLR","t":16},{"code":"ENPH","name":"Enphase","en":"Enphase","market":"US","kind":"stock","yf":"ENPH","t":16},{"code":"FLNC","name":"Fluence储能","en":"Fluence Energy","market":"US","kind":"stock","yf":"FLNC","t":16},{"code":"BE","name":"Bloom Energy","en":"Bloom Energy","market":"US","kind":"stock","yf":"BE","t":16},{"code":"SHLS","name":"Shoals","en":"Shoals","market":"US","kind":"stock","yf":"SHLS","t":16},{"code":"RUN","name":"Sunrun","en":"Sunrun","market":"US","kind":"stock","yf":"RUN","t":16},{"code":"AES","name":"AES电力","en":"AES Corp","market":"US","kind":"stock","yf":"AES","t":16},{"code":"600900","name":"长江电力","en":null,"market":"CN","kind":"stock","yf":"600900.SS","t":16},{"code":"601985","name":"中国核电","en":null,"market":"CN","kind":"stock","yf":"601985.SS","t":16},{"code":"003816","name":"中国广核","en":null,"market":"CN","kind":"stock","yf":"003816.SZ","t":16},{"code":"300750","name":"宁德时代","en":null,"market":"CN","kind":"stock","yf":"300750.SZ","t":16},{"code":"300274","name":"阳光电源","en":null,"market":"CN","kind":"stock","yf":"300274.SZ","t":16},{"code":"600089","name":"特变电工","en":null,"market":"CN","kind":"stock","yf":"600089.SS","t":16},{"code":"002028","name":"思源电气","en":null,"market":"CN","kind":"stock","yf":"002028.SZ","t":16},{"code":"600406","name":"国电南瑞","en":null,"market":"CN","kind":"stock","yf":"600406.SS","t":16},{"code":"000400","name":"许继电气","en":null,"market":"CN","kind":"stock","yf":"000400.SZ","t":16},{"code":"600312","name":"平高电气","en":null,"market":"CN","kind":"stock","yf":"600312.SS","t":16},{"code":"688676","name":"金盘科技","en":null,"market":"CN","kind":"stock","yf":"688676.SS","t":16},{"code":"600875","name":"东方电气","en":null,"market":"CN","kind":"stock","yf":"600875.SS","t":16},{"code":"601727","name":"上海电气","en":null,"market":"CN","kind":"stock","yf":"601727.SS","t":16},{"code":"688390","name":"固德威","en":null,"market":"CN","kind":"stock","yf":"688390.SS","t":16},{"code":"300763","name":"锦浪科技","en":null,"market":"CN","kind":"stock","yf":"300763.SZ","t":16},{"code":"605117","name":"德业股份","en":null,"market":"CN","kind":"stock","yf":"605117.SS","t":16},{"code":"603063","name":"禾望电气","en":null,"market":"CN","kind":"stock","yf":"603063.SS","t":16},{"code":"605305","name":"中际联合","en":null,"market":"CN","kind":"stock","yf":"605305.SS","t":16},{"code":"300491","name":"通合科技","en":null,"market":"CN","kind":"stock","yf":"300491.SZ","t":16},{"code":"300014","name":"亿纬锂能","en":null,"market":"CN","kind":"stock","yf":"300014.SZ","t":16},{"code":"GRID","name":"First Trust电网ETF","en":"First Trust Clean Edge Grid ETF","market":"US","kind":"etf","yf":"GRID","t":16},{"code":"XLU","name":"公用事业ETF","en":"Utilities Select Sector SPDR","market":"US","kind":"etf","yf":"XLU","t":16},{"code":"ICLN","name":"iShares清洁能源ETF","en":"iShares Global Clean Energy ETF","market":"US","kind":"etf","yf":"ICLN","t":16},{"code":"TAN","name":"Invesco太阳能ETF","en":"Invesco Solar ETF","market":"US","kind":"etf","yf":"TAN","t":16},{"code":"561560","name":"电力ETF","en":null,"market":"CN","kind":"etf","yf":"561560.SS","t":16},{"code":"PANW","name":"Palo Alto","en":"Palo Alto Networks","market":"US","kind":"stock","yf":"PANW","t":17},{"code":"CRWD","name":"CrowdStrike","en":"CrowdStrike","market":"US","kind":"stock","yf":"CRWD","t":17},{"code":"ZS","name":"Zscaler","en":"Zscaler","market":"US","kind":"stock","yf":"ZS","t":17},{"code":"FTNT","name":"Fortinet","en":"Fortinet","market":"US","kind":"stock","yf":"FTNT","t":17},{"code":"OKTA","name":"Okta","en":"Okta","market":"US","kind":"stock","yf":"OKTA","t":17},{"code":"CYBR","name":"CyberArk","en":"CyberArk","market":"US","kind":"stock","yf":"CYBR","t":17},{"code":"QLYS","name":"Qualys","en":"Qualys","market":"US","kind":"stock","yf":"QLYS","t":17},{"code":"TENB","name":"Tenable","en":"Tenable","market":"US","kind":"stock","yf":"TENB","t":17},{"code":"RPD","name":"Rapid7","en":"Rapid7","market":"US","kind":"stock","yf":"RPD","t":17},{"code":"S","name":"SentinelOne","en":"SentinelOne","market":"US","kind":"stock","yf":"S","t":17},{"code":"NET","name":"Cloudflare","en":"Cloudflare","market":"US","kind":"stock","yf":"NET","t":17},{"code":"GEN","name":"Gen Digital","en":"Gen Digital","market":"US","kind":"stock","yf":"GEN","t":17},{"code":"AKAM","name":"Akamai","en":"Akamai","market":"US","kind":"stock","yf":"AKAM","t":17},{"code":"CHKP","name":"Check Point","en":"Check Point","market":"US","kind":"stock","yf":"CHKP","t":17},{"code":"VRNS","name":"Varonis","en":"Varonis","market":"US","kind":"stock","yf":"VRNS","t":17},{"code":"601360","name":"三六零","en":null,"market":"CN","kind":"stock","yf":"601360.SS","t":17},{"code":"300454","name":"深信服","en":null,"market":"CN","kind":"stock","yf":"300454.SZ","t":17},{"code":"002439","name":"启明星辰","en":null,"market":"CN","kind":"stock","yf":"002439.SZ","t":17},{"code":"688561","name":"奇安信","en":null,"market":"CN","kind":"stock","yf":"688561.SS","t":17},{"code":"300369","name":"绿盟科技","en":null,"market":"CN","kind":"stock","yf":"300369.SZ","t":17},{"code":"002212","name":"天融信","en":null,"market":"CN","kind":"stock","yf":"002212.SZ","t":17},{"code":"688023","name":"安恒信息","en":null,"market":"CN","kind":"stock","yf":"688023.SS","t":17},{"code":"002268","name":"卫士通","en":null,"market":"CN","kind":"stock","yf":"002268.SZ","t":17},{"code":"300188","name":"美亚柏科","en":null,"market":"CN","kind":"stock","yf":"300188.SZ","t":17},{"code":"300768","name":"迪普科技","en":null,"market":"CN","kind":"stock","yf":"300768.SZ","t":17},{"code":"300311","name":"任子行","en":null,"market":"CN","kind":"stock","yf":"300311.SZ","t":17},{"code":"603232","name":"格尔软件","en":null,"market":"CN","kind":"stock","yf":"603232.SS","t":17},{"code":"300579","name":"数字认证","en":null,"market":"CN","kind":"stock","yf":"300579.SZ","t":17},{"code":"003029","name":"吉大正元","en":null,"market":"CN","kind":"stock","yf":"003029.SZ","t":17},{"code":"688030","name":"山石网科","en":null,"market":"CN","kind":"stock","yf":"688030.SS","t":17},{"code":"300659","name":"中孚信息","en":null,"market":"CN","kind":"stock","yf":"300659.SZ","t":17},{"code":"688225","name":"亚信安全","en":null,"market":"CN","kind":"stock","yf":"688225.SS","t":17},{"code":"300386","name":"飞天诚信","en":null,"market":"CN","kind":"stock","yf":"300386.SZ","t":17},{"code":"688201","name":"信安世纪","en":null,"market":"CN","kind":"stock","yf":"688201.SS","t":17},{"code":"300229","name":"拓尔思","en":null,"market":"CN","kind":"stock","yf":"300229.SZ","t":17},{"code":"CIBR","name":"First Trust网络安全ETF","en":"First Trust Nasdaq Cybersecurity ETF","market":"US","kind":"etf","yf":"CIBR","t":17},{"code":"HACK","name":"Amplify网络安全ETF","en":"Amplify Cybersecurity ETF","market":"US","kind":"etf","yf":"HACK","t":17},{"code":"BUG","name":"Global X网络安全ETF","en":"Global X Cybersecurity ETF","market":"US","kind":"etf","yf":"BUG","t":17},{"code":"IGV","name":"iShares软件ETF","en":"iShares Software ETF","market":"US","kind":"etf","yf":"IGV","t":17},{"code":"WCLD","name":"WisdomTree云软件ETF","en":"WisdomTree Cloud ETF","market":"US","kind":"etf","yf":"WCLD","t":17},{"code":"BABA","name":"阿里巴巴","en":"Alibaba","market":"US","kind":"stock","yf":"BABA","t":18},{"code":"PDD","name":"拼多多","en":"PDD Holdings","market":"US","kind":"stock","yf":"PDD","t":18},{"code":"JD","name":"京东","en":"JD.com","market":"US","kind":"stock","yf":"JD","t":18},{"code":"BIDU","name":"百度","en":"Baidu","market":"US","kind":"stock","yf":"BIDU","t":18},{"code":"NTES","name":"网易","en":"NetEase","market":"US","kind":"stock","yf":"NTES","t":18},{"code":"TME","name":"腾讯音乐","en":"Tencent Music","market":"US","kind":"stock","yf":"TME","t":18},{"code":"BILI","name":"哔哩哔哩","en":"Bilibili","market":"US","kind":"stock","yf":"BILI","t":18},{"code":"TCOM","name":"携程","en":"Trip.com","market":"US","kind":"stock","yf":"TCOM","t":18},{"code":"BEKE","name":"贝壳","en":"KE Holdings","market":"US","kind":"stock","yf":"BEKE","t":18},{"code":"FUTU","name":"富途","en":"Futu","market":"US","kind":"stock","yf":"FUTU","t":18},{"code":"VIPS","name":"唯品会","en":"Vipshop","market":"US","kind":"stock","yf":"VIPS","t":18},{"code":"YMM","name":"满帮","en":"Full Truck Alliance","market":"US","kind":"stock","yf":"YMM","t":18},{"code":"WB","name":"微博","en":"Weibo","market":"US","kind":"stock","yf":"WB","t":18},{"code":"IQ","name":"爱奇艺","en":"iQIYI","market":"US","kind":"stock","yf":"IQ","t":18},{"code":"NFLX","name":"奈飞","en":"Netflix","market":"US","kind":"stock","yf":"NFLX","t":18},{"code":"SPOT","name":"Spotify","en":"Spotify","market":"US","kind":"stock","yf":"SPOT","t":18},{"code":"RDDT","name":"Reddit","en":"Reddit","market":"US","kind":"stock","yf":"RDDT","t":18},{"code":"PINS","name":"Pinterest","en":"Pinterest","market":"US","kind":"stock","yf":"PINS","t":18},{"code":"DASH","name":"DoorDash","en":"DoorDash","market":"US","kind":"stock","yf":"DASH","t":18},{"code":"ABNB","name":"爱彼迎","en":"Airbnb","market":"US","kind":"stock","yf":"ABNB","t":18},{"code":"002027","name":"分众传媒","en":null,"market":"CN","kind":"stock","yf":"002027.SZ","t":18},{"code":"300413","name":"芒果超媒","en":null,"market":"CN","kind":"stock","yf":"300413.SZ","t":18},{"code":"002555","name":"三七互娱","en":null,"market":"CN","kind":"stock","yf":"002555.SZ","t":18},{"code":"002624","name":"完美世界","en":null,"market":"CN","kind":"stock","yf":"002624.SZ","t":18},{"code":"002517","name":"恺英网络","en":null,"market":"CN","kind":"stock","yf":"002517.SZ","t":18},{"code":"002602","name":"世纪华通","en":null,"market":"CN","kind":"stock","yf":"002602.SZ","t":18},{"code":"002558","name":"巨人网络","en":null,"market":"CN","kind":"stock","yf":"002558.SZ","t":18},{"code":"002605","name":"姚记科技","en":null,"market":"CN","kind":"stock","yf":"002605.SZ","t":18},{"code":"002315","name":"焦点科技","en":null,"market":"CN","kind":"stock","yf":"002315.SZ","t":18},{"code":"300785","name":"值得买","en":null,"market":"CN","kind":"stock","yf":"300785.SZ","t":18},{"code":"300571","name":"平治信息","en":null,"market":"CN","kind":"stock","yf":"300571.SZ","t":18},{"code":"300017","name":"网宿科技","en":null,"market":"CN","kind":"stock","yf":"300017.SZ","t":18},{"code":"002174","name":"游族网络","en":null,"market":"CN","kind":"stock","yf":"002174.SZ","t":18},{"code":"603533","name":"掌阅科技","en":null,"market":"CN","kind":"stock","yf":"603533.SS","t":18},{"code":"300296","name":"利亚德","en":null,"market":"CN","kind":"stock","yf":"300296.SZ","t":18},{"code":"KWEB","name":"KraneShares中概互联ETF","en":"KraneShares CSI China Internet ETF","market":"US","kind":"etf","yf":"KWEB","t":18},{"code":"CQQQ","name":"Invesco中国科技ETF","en":"Invesco China Technology ETF","market":"US","kind":"etf","yf":"CQQQ","t":18},{"code":"PGJ","name":"Invesco金龙中国ETF","en":"Invesco Golden Dragon China ETF","market":"US","kind":"etf","yf":"PGJ","t":18},{"code":"QQQ","name":"Invesco纳指100","en":"Invesco QQQ","market":"US","kind":"etf","yf":"QQQ","t":18},{"code":"513050","name":"中概互联网ETF","en":null,"market":"CN","kind":"etf","yf":"513050.SS","t":18},{"code":"AAPL","name":"苹果","en":"Apple","market":"US","kind":"stock","yf":"AAPL","t":19},{"code":"HPQ","name":"惠普","en":"HP Inc","market":"US","kind":"stock","yf":"HPQ","t":19},{"code":"LOGI","name":"罗技","en":"Logitech","market":"US","kind":"stock","yf":"LOGI","t":19},{"code":"GRMN","name":"Garmin","en":"Garmin","market":"US","kind":"stock","yf":"GRMN","t":19},{"code":"SONO","name":"Sonos","en":"Sonos","market":"US","kind":"stock","yf":"SONO","t":19},{"code":"GPRO","name":"GoPro","en":"GoPro","market":"US","kind":"stock","yf":"GPRO","t":19},{"code":"CRSR","name":"海盗船","en":"Corsair","market":"US","kind":"stock","yf":"CRSR","t":19},{"code":"VUZI","name":"Vuzix","en":"Vuzix","market":"US","kind":"stock","yf":"VUZI","t":19},{"code":"KOSS","name":"Koss","en":"Koss","market":"US","kind":"stock","yf":"KOSS","t":19},{"code":"IMMR","name":"Immersion","en":"Immersion","market":"US","kind":"stock","yf":"IMMR","t":19},{"code":"002241","name":"歌尔股份","en":null,"market":"CN","kind":"stock","yf":"002241.SZ","t":19},{"code":"688036","name":"传音控股","en":null,"market":"CN","kind":"stock","yf":"688036.SS","t":19},{"code":"300433","name":"蓝思科技","en":null,"market":"CN","kind":"stock","yf":"300433.SZ","t":19},{"code":"002600","name":"领益智造","en":null,"market":"CN","kind":"stock","yf":"002600.SZ","t":19},{"code":"000725","name":"京东方A","en":null,"market":"CN","kind":"stock","yf":"000725.SZ","t":19},{"code":"000100","name":"TCL科技","en":null,"market":"CN","kind":"stock","yf":"000100.SZ","t":19},{"code":"002841","name":"视源股份","en":null,"market":"CN","kind":"stock","yf":"002841.SZ","t":19},{"code":"300207","name":"欣旺达","en":null,"market":"CN","kind":"stock","yf":"300207.SZ","t":19},{"code":"000049","name":"德赛电池","en":null,"market":"CN","kind":"stock","yf":"000049.SZ","t":19},{"code":"601231","name":"环旭电子","en":null,"market":"CN","kind":"stock","yf":"601231.SS","t":19},{"code":"300735","name":"光弘科技","en":null,"market":"CN","kind":"stock","yf":"300735.SZ","t":19},{"code":"603327","name":"福蓉科技","en":null,"market":"CN","kind":"stock","yf":"603327.SS","t":19},{"code":"688210","name":"统联精密","en":null,"market":"CN","kind":"stock","yf":"688210.SS","t":19},{"code":"300686","name":"智动力","en":null,"market":"CN","kind":"stock","yf":"300686.SZ","t":19},{"code":"300115","name":"长盈精密","en":null,"market":"CN","kind":"stock","yf":"300115.SZ","t":19},{"code":"002475","name":"立讯精密","en":null,"market":"CN","kind":"stock","yf":"002475.SZ","t":19},{"code":"002138","name":"顺络电子","en":null,"market":"CN","kind":"stock","yf":"002138.SZ","t":19},{"code":"002938","name":"鹏鼎控股","en":null,"market":"CN","kind":"stock","yf":"002938.SZ","t":19},{"code":"002384","name":"东山精密","en":null,"market":"CN","kind":"stock","yf":"002384.SZ","t":19},{"code":"002351","name":"漫步者","en":null,"market":"CN","kind":"stock","yf":"002351.SZ","t":19},{"code":"XLK","name":"科技ETF","en":"Technology Select Sector SPDR","market":"US","kind":"etf","yf":"XLK","t":19},{"code":"QQQ","name":"Invesco纳指100","en":"Invesco QQQ","market":"US","kind":"etf","yf":"QQQ","t":19},{"code":"SOXX","name":"iShares半导体ETF","en":"iShares Semiconductor ETF","market":"US","kind":"etf","yf":"SOXX","t":19},{"code":"515260","name":"电子ETF","en":null,"market":"CN","kind":"etf","yf":"515260.SS","t":19},{"code":"159732","name":"消费电子ETF","en":null,"market":"CN","kind":"etf","yf":"159732.SZ","t":19}],"indices":{"CN":[["000001.SS","上证指数","SSE Composite"],["399001.SZ","深证成指","SZSE Component"],["399006.SZ","创业板指","ChiNext"],["000300.SS","沪深300","CSI 300"]],"US":[["^GSPC","标普500","S&P 500"],["^IXIC","纳斯达克","Nasdaq"],["^SOX","费城半导体","PHLX Semiconductor"],["^DJI","道琼斯","Dow Jones"]]}};
+/* ===== 单文件:实时数据层(标的清单内嵌,数据浏览器实时拉取) ===== */
+function expandUniverse(){
+  var T=UNI_RAW.tracks;
+  return UNI_RAW.universe.map(function(r){var t=T[r.t];
+    return {code:r.code,name:r.name,en:r.en,market:r.market,kind:r.kind,yf:r.yf,
+      track:t.n,track_en:t.en,layer:t.layer,layer_en:t.layer_en,stars:t.stars,desc:t.desc,desc_en:t.desc_en};});
+}
+function baseDATA(){
+  var uni=expandUniverse();
+  var data={tickers:{},indices:{},history:{},universe:uni,meta:{},briefs:{},strategy:null,_preview:false,_previewMode:false};
+  uni.forEach(function(r){if(!data.tickers[r.yf])data.tickers[r.yf]={code:r.code,name:r.name,en:r.en,market:r.market,kind:r.kind,price:null,prev:null,pct:null};});
+  ["CN","US"].forEach(function(mk){(UNI_RAW.indices[mk]||[]).forEach(function(a){data.indices[a[0]]={name:a[1],en:a[2],market:mk,price:null,prev:null,pct:null};});});
+  return data;
+}
+function allSymbols(){var s={};Object.keys(DATA.tickers).forEach(function(y){s[y]=1;});Object.keys(DATA.indices).forEach(function(y){s[y]=1;});return Object.keys(s);}
+async function fetchQuotesInto(target){
+  var syms=allSymbols();var CH=400;var got=0;
+  for(var i=0;i<syms.length;i+=CH){
+    var batch=syms.slice(i,i+CH);
+    var r=await fetch("/api/quotes?symbols="+encodeURIComponent(batch.join(",")),{cache:"no-store"});
+    if(!r.ok)throw new Error("quotes "+r.status);
+    var d=await r.json();var q=(d&&d.quotes)||{};
+    for(var yf in q){var v=q[yf];if(!v||v.price==null)continue;
+      if(target.tickers[yf]){target.tickers[yf].price=v.price;target.tickers[yf].prev=v.prev;target.tickers[yf].pct=v.pct;got++;}
+      if(target.indices[yf]){target.indices[yf].price=v.price;target.indices[yf].prev=v.prev;target.indices[yf].pct=v.pct;}}
+  }
+  return got;
+}
+async function fetchIndexHistories(){
+  var syms=Object.keys(DATA.indices);
+  await Promise.all(syms.map(async function(s){
+    try{var r=await fetch("/api/stock?sym="+encodeURIComponent(s),{cache:"no-store"});
+      if(!r.ok)return;var d=await r.json();
+      if(d&&d.history&&d.history.c&&d.history.c.length>2)DATA.history[s]=d.history;}catch(e){}
+  }));
+}
+function fillRandom(){
+  Object.values(DATA.tickers).forEach(function(t){var h=genHist((t.code||"")+t.market);
+    var a=h.c[h.c.length-1],b=h.c[h.c.length-2];t.price=+a.toFixed(2);t.prev=+b.toFixed(2);t.pct=+((a-b)/b*100).toFixed(2);});
+  Object.keys(DATA.indices).forEach(function(s){var h=genHist(s);DATA.history[s]=h;
+    var a=h.c[h.c.length-1],b=h.c[h.c.length-2];var x=DATA.indices[s];x.price=+a.toFixed(2);x.prev=+b.toFixed(2);x.pct=+((a-b)/b*100).toFixed(2);});
+}
+async function load(){
+  DATA=baseDATA();
+  buildUniIndex();applyStaticLang();
+  var el=document.getElementById("meta");if(el)el.textContent=L("正在加载实时行情…","Loading live quotes…");
+  var live=false;
+  try{var n=await fetchQuotesInto(DATA);if(n>0)live=true;}catch(e){}
+  if(live){try{await fetchIndexHistories();}catch(e){}}else{fillRandom();}
+  DATA._preview=DATA._previewMode=!live;
+  DATA.meta.updated_at=new Date().toISOString();
+  try{makeBriefs();}catch(e){}
+  try{makeStrategy();}catch(e){}
+  if(live){LIVE_TS=Date.now();markLive();}else{setMetaLine();}
+  setFootLine();router();startLive();
+}
+/* ===== 客户端简报/策略(基于实时涨跌,中英双语) ===== */
+function _fmt(p){return (p>=0?"+":"")+p.toFixed(2)+"%";}
+function makeBriefs(){
+  DATA.briefs={};
+  ["CN","US"].forEach(function(mkt){
+    var recs=(DATA.universe||[]).filter(function(r){return r.market===mkt&&r.kind==="stock";});
+    var seen={},rows=[],tr={};
+    recs.forEach(function(r){if(seen[r.code])return;var q=DATA.tickers[r.yf];if(!q||q.pct==null)return;seen[r.code]=1;
+      rows.push({name:r.name,en:r.en,track:r.track,track_en:r.track_en,pct:q.pct});});
+    recs.forEach(function(r){var q=DATA.tickers[r.yf];if(!q||q.pct==null)return;(tr[r.track]=tr[r.track]||{s:0,n:0,en:r.track_en}).s+=q.pct;tr[r.track].n++;});
+    if(!rows.length)return;
+    rows.sort(function(a,b){return b.pct-a.pct;});
+    var up=rows.filter(function(x){return x.pct>0;}).length,dn=rows.filter(function(x){return x.pct<0;}).length,fl=rows.length-up-dn;
+    var adv=Math.round(up/rows.length*100);
+    var trank=Object.keys(tr).map(function(t){return {t:t,en:tr[t].en,a:tr[t].s/tr[t].n};}).sort(function(a,b){return b.a-a.a;});
+    var nm=function(x){return (mkt==="US"&&x.en)?x.en:x.name;};
+    var best=trank[0],worst=trank[trank.length-1];
+    var mkcn=mkt==="CN"?"A股":"美股",mken=mkt==="CN"?"A-Shares":"US";
+    var toneZh=up>dn*1.6?"普涨":(dn>up*1.6?"普跌":"涨跌互现"),toneEn=up>dn*1.6?"broadly higher":(dn>up*1.6?"broadly lower":"mixed");
+    var introZh="AI 算力链观察池"+toneZh+","+up+" 涨 / "+dn+" 跌(共 "+rows.length+" 只);"+best.t+"("+_fmt(best.a)+")最强、"+worst.t+"("+_fmt(worst.a)+")最弱;"+rows[0].name+"领涨 "+_fmt(rows[0].pct)+"、"+rows[rows.length-1].name+"领跌 "+_fmt(rows[rows.length-1].pct)+"。";
+    var introEn="The AI compute-chain pool was "+toneEn+", "+up+" up / "+dn+" down (of "+rows.length+"); "+(best.en||best.t)+" ("+_fmt(best.a)+") strongest, "+(worst.en||worst.t)+" ("+_fmt(worst.a)+") weakest; "+nm(rows[0])+" led "+_fmt(rows[0].pct)+", "+nm(rows[rows.length-1])+" lagged "+_fmt(rows[rows.length-1].pct)+".";
+    var moodZh=adv>=60?"情绪偏强":(adv<=40?"情绪偏弱":"情绪中性"),moodEn=adv>=60?"risk-on":(adv<=40?"risk-off":"neutral");
+    var sec=[];
+    sec.push({h:"大盘与宽度",h_en:"Market & Breadth",
+      items:["观察池宽度:"+up+" 涨 / "+dn+" 跌 / "+fl+" 平。","上涨占比 "+adv+"%,"+moodZh+"。"],
+      items_en:["Pool breadth: "+up+" up / "+dn+" down / "+fl+" flat.","Advancers "+adv+"%, "+moodEn+"."]});
+    sec.push({h:"赛道轮动",h_en:"Sector Rotation",
+      items:trank.slice(0,3).map(function(t){return "领涨赛道 · "+t.t+":平均 "+_fmt(t.a);}).concat(trank.slice(-3).reverse().map(function(t){return "走弱赛道 · "+t.t+":平均 "+_fmt(t.a);})),
+      items_en:trank.slice(0,3).map(function(t){return "Leading · "+(t.en||t.t)+": avg "+_fmt(t.a);}).concat(trank.slice(-3).reverse().map(function(t){return "Lagging · "+(t.en||t.t)+": avg "+_fmt(t.a);}))});
+    sec.push({h:"个股看点",h_en:"Single-Stock Highlights",
+      items:["领涨 TOP8:"+rows.slice(0,8).map(function(x){return x.name+" "+_fmt(x.pct);}).join("、"),"领跌 TOP8:"+rows.slice(-8).reverse().map(function(x){return x.name+" "+_fmt(x.pct);}).join("、")],
+      items_en:["Top 8 gainers: "+rows.slice(0,8).map(function(x){return nm(x)+" "+_fmt(x.pct);}).join(", "),"Top 8 losers: "+rows.slice(-8).reverse().map(function(x){return nm(x)+" "+_fmt(x.pct);}).join(", ")]});
+    DATA.briefs[mkt.toLowerCase()+"_summary"]={
+      title:mkcn+"实时概览",title_en:mken+" Live Overview",
+      stamp:new Date().toLocaleString(locale()),
+      headline:"实时快照 · 强弱与赛道轮动",headline_en:"Live snapshot · strength & sector rotation",
+      intro:introZh,intro_en:introEn,sections:sec};
+  });
+}
+var SEC_STRONG=[
+  ["赛道均值 {a},相对强势、资金偏好","Track avg {a}, relatively strong and favored by flows"],
+  ["{a} 领跑,轮动主线之一","{a} — a leadership line in the rotation"],
+  ["均值 {a},人气与量能占优","Avg {a}, with momentum and volume in its favor"]];
+var SEC_WEAK=[
+  ["赛道均值 {a},相对弱势","Track avg {a}, relatively weak"],
+  ["{a} 落后,资金流出、暂避","{a} — lagging with outflows; avoid for now"],
+  ["均值 {a},走弱,等企稳","Avg {a}, softening — wait for it to stabilize"]];
+var PICK_R=[
+  ["当日 {p},{tk} 领涨","Up {p} today, leading {tk}"],
+  ["{tk} 内领先,当日 {p}","Leads {tk}, {p} today"],
+  ["强势 {p},{tk} 主线","Strong {p}, part of the {tk} theme"]];
+function makeStrategy(){
+  var cand=[],seen={},tr={};
+  (DATA.universe||[]).forEach(function(r){if(r.kind!=="stock"||seen[r.code])return;var q=DATA.tickers[r.yf];if(!q||q.pct==null)return;seen[r.code]=1;
+    cand.push({name:r.name,en:r.en,code:r.code,yf:r.yf,market:r.market,track:r.track,track_en:r.track_en,pct:q.pct});
+    (tr[r.track]=tr[r.track]||{s:0,n:0,en:r.track_en}).s+=q.pct;tr[r.track].n++;});
+  if(!cand.length){DATA.strategy=null;return;}
+  var up=cand.filter(function(c){return c.pct>0;}).length,adv=Math.round(up/cand.length*100);
+  var trank=Object.keys(tr).map(function(t){return {t:t,en:tr[t].en,a:tr[t].s/tr[t].n};}).sort(function(a,b){return b.a-a.a;});
+  var picks=cand.slice().sort(function(a,b){return b.pct-a.pct;}).slice(0,10);
+  var pen=function(p){return (p.market==="US"&&p.en)?p.en:p.name;};
+  var sentZh=adv>=60?"偏强":(adv<=40?"偏弱":"中性"),sentEn=adv>=60?"Bullish":(adv<=40?"Bearish":"Neutral");
+  DATA.strategy={
+    engine:"实时规则引擎",engine_en:"Live rule engine",stamp:new Date().toLocaleString(locale()),
+    sentiment:sentZh,sentiment_en:sentEn,
+    market_view:"全市场上涨占比 "+adv+"%,情绪"+sentZh+";"+trank[0].t+" 最强(均值 "+_fmt(trank[0].a)+")、"+trank[trank.length-1].t+" 最弱(均值 "+_fmt(trank[trank.length-1].a)+")。",
+    market_view_en:"Breadth "+adv+"% advancing, sentiment "+sentEn.toLowerCase()+"; "+(trank[0].en||trank[0].t)+" strongest (avg "+_fmt(trank[0].a)+"), "+(trank[trank.length-1].en||trank[trank.length-1].t)+" weakest (avg "+_fmt(trank[trank.length-1].a)+").",
+    sectors:trank.slice(0,3).map(function(t){var v=vpick(SEC_STRONG,t.t);return {name:t.t,name_en:t.en,stance:"关注",stance_en:"Watch",reason:tfill(v,{a:_fmt(t.a)})[0],reason_en:tfill(v,{a:_fmt(t.a)})[1]};})
+      .concat(trank.slice(-3).map(function(t){var v=vpick(SEC_WEAK,t.t);return {name:t.t,name_en:t.en,stance:"回避",stance_en:"Avoid",reason:tfill(v,{a:_fmt(t.a)})[0],reason_en:tfill(v,{a:_fmt(t.a)})[1]};})),
+    picks:picks.map(function(p){var v=vpick(PICK_R,p.code+p.name);var pc=_fmt(p.pct);return {name:p.name,name_en:pen(p),code:p.code,yf:p.yf,market:p.market,reason:tfill(v,{p:pc,tk:p.track})[0],reason_en:tfill(v,{p:pc,tk:(p.track_en||p.track)})[1]};}),
+    risks:["仅基于当日涨跌的机械信号,未含技术/估值因子。","不构成投资建议,数据为实时/延迟。"],
+    risks_en:["Mechanical signals from today's move only; no technical/valuation factors.","Not investment advice; data is live/delayed."],
+    disclaimer:"本策略由程序基于实时行情自动生成,仅供研究参考,不构成投资建议;投资有风险,决策需自负。",
+    disclaimer_en:"Auto-generated from live quotes for research only; not investment advice. Investing carries risk — decide on your own."};
+}
+
+function setMetaLine(){
+  if(!DATA)return;const el=document.getElementById("meta");if(!el)return;
+  if(DATA._previewMode)el.innerHTML=L("⚠ 预览模式 · 示例随机数据(实际部署后为真实实时行情)","⚠ Preview mode · random sample data (real live quotes once deployed)");
+  else if(LIVE_TS)markLive();
+  else el.innerHTML=L("实时行情 · 非投资建议","Live quotes · Not investment advice");
+}
+function setFootLine(){
+  const el=document.getElementById("foot");if(!el||!DATA)return;
+  el.textContent=(DATA._previewMode?L("预览模式 · ","Preview · "):"")+L("标的 ","Instruments ")+Object.keys(DATA.tickers||{}).length+L(" ｜ 实时数据源 雅虎/腾讯 ｜ 单页应用 ｜ 仅供研究,非投资建议。"," | Live source: Yahoo/Tencent | Single-page app | Research only, not investment advice.");
+}
+const TABS={overview:["大盘总览","Overview"],rank:["涨跌幅排名","Movers"],tracks:["全部赛道","Tracks"],strategy:["AI 策略","Strategy"],brief:["盘前/盘后简报","Briefing"]};
+function cmodeLabel(){return LANG==="en"?(GREENUP?"Green-up/Red-down":"Red-up/Green-down"):(GREENUP?"绿涨红跌":"红涨绿跌");}
+function applyStaticLang(){
+  try{document.documentElement.lang=LANG==="en"?"en":"zh-CN";}catch(e){}
+  document.title=L("AI大模型 · 美股A股行情","AI LLM · US & A-Share Markets");
+  const h1=document.querySelector("header h1");if(h1)h1.innerHTML=L("AI大模型 · 美股A股行情 <small>AI LLM · US & A-Share Markets</small>","AI LLM · US & A-Share Markets <small>美股A股行情</small>");
+  const gs=document.getElementById("gsearch");if(gs)gs.placeholder=L("🔍 搜名称/代码/Ticker","🔍 Search name / code / ticker");
+  const rb=document.getElementById("refreshBtn");if(rb)rb.textContent=L("🔄 刷新","🔄 Refresh");
+  const lt=document.getElementById("langtoggle");if(lt)lt.textContent=LANG==="en"?"中":"EN";
+  const cm=document.getElementById("cmode");if(cm)cm.textContent=cmodeLabel();
+  document.querySelectorAll(".tab").forEach(function(b){const s=b.dataset.s,t=TABS[s];if(!t)return;
+    b.innerHTML=(LANG==="en"?t[1]:t[0])+(LANG==="en"?"":"<small>"+t[1]+"</small>");});
+}
+function applyLangAndRender(){
+  applyStaticLang();
+  if(!DATA)return;
+  setMetaLine();setFootLine();
+  charts.forEach(c=>{try{c.dispose();}catch(e){}});charts=[];
+  dcharts.forEach(c=>{try{c.dispose();}catch(e){}});dcharts=[];
+  const ov=document.getElementById("overview");if(ov)ov.removeAttribute("data-done");
+  heatSector=null;router();
+}
+
+/* ============ 实时层:按需拉 /api/quotes 合并,可见时轮询 ============ */
+let LIVE_TS=0,LIVE_STARTED=false;
+async function liveQuotes(){
+  if(!DATA||DATA._preview)return;            // 预览模式不拉实时
+  try{
+    const n=await fetchQuotesInto(DATA);
+    if(n){LIVE_TS=Date.now();try{makeBriefs();makeStrategy();}catch(e){}markLive();refreshViews();}
+  }catch(e){}
+}
+function markLive(){const el=document.getElementById("meta");if(!el)return;
+  el.innerHTML="<span style='color:"+DOWN+";' >● "+L("实时 LIVE","LIVE")+"</span> "+L("最后更新 ","Updated ")+new Date(LIVE_TS).toLocaleTimeString(locale())+L(" ｜ 非投资建议"," | Not investment advice");}
+function refreshViews(){
+  if(location.hash.indexOf("#/d/")===0)return;      // 详情页不打断图表
+  const on=document.querySelector(".sec.on"),id=on?on.id:"overview";
+  try{
+    if(id==="overview"){const cn=breadthOf("CN"),us=breadthOf("US");drawTree(heatMkt);drawTrack();drawMovers();drawPie(cn,us);drawGauge(cn,us);}
+    else if(id==="rank")drawRT();
+    else if(id==="tracks")renderTracks();
+    else if(id==="strategy")renderStrategy();
+    else if(id==="brief")renderBrief();
+  }catch(e){}
+}
+function startLive(){
+  if(LIVE_STARTED)return;LIVE_STARTED=true;
+  liveQuotes();
+  setInterval(()=>{if(document.visibilityState==="visible")liveQuotes();},30000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")liveQuotes();});
+}
+
+/* universe 索引:yf -> {name,en,tracks[],layer,desc,track_en,market,kind} */
+let UNI={};
+function buildUniIndex(){
+  UNI={};TRKEN={};(DATA.universe||[]).forEach(r=>{
+    if(!UNI[r.yf])UNI[r.yf]={name:r.name,en:r.en,layer:r.layer,layer_en:r.layer_en,desc:r.desc,desc_en:r.desc_en,track_en:r.track_en,market:r.market,kind:r.kind,tracks:[]};
+    if(!UNI[r.yf].tracks.includes(r.track))UNI[r.yf].tracks.push(r.track);
+    if(r.track&&r.track_en&&!TRKEN[r.track])TRKEN[r.track]=r.track_en;
+  });
+}
+
+/* ============ 路由 ============ */
+function go(sym){location.hash="#/d/"+encodeURIComponent(sym);}
+function router(){
+  const h=location.hash||"";
+  if(h.startsWith("#/d/")){
+    const sym=decodeURIComponent(h.slice(4));
+    document.getElementById("viewMain").style.display="none";
+    document.getElementById("viewDetail").style.display="block";
+    renderDetail(sym);window.scrollTo(0,0);
+  }else{
+    document.getElementById("viewDetail").style.display="none";
+    document.getElementById("viewMain").style.display="block";
+    dcharts.forEach(c=>{try{c.dispose();}catch(e){}});dcharts=[];
+    if(!document.getElementById("overview").dataset.done){renderAll();}
+    setTimeout(()=>charts.forEach(c=>{try{c.resize();}catch(e){}}),50);
+  }
+}
+window.addEventListener("hashchange",router);
+
+function renderAll(){[renderOverview,renderRank,renderTracks,renderStrategy,renderBrief].forEach(fn=>{try{fn();}catch(e){console.error(e);}});document.getElementById("overview").dataset.done="1";}
+
+/* ============ 工具 ============ */
+function HASE(){return typeof echarts!=="undefined";}
+function mk(id,arr){const el=document.getElementById(id);if(!el||!HASE())return null;try{const c=echarts.init(el,null,{renderer:"canvas"});(arr||charts).push(c);return c;}catch(e){return null;}}
+function chartCell(id,hgt){return HASE()?("<div id='"+id+"' class='chart' style='height:"+hgt+"'></div>"):("<div class='empty' style='height:"+hgt+";display:flex;align-items:center;justify-content:center;text-align:center'>此预览不支持 ECharts 图表<br>双击在浏览器打开 / 部署后可见</div>");}
+function cssHeatmapHTML(mkt){mkt=mkt||"ALL";const uni=DATA.universe||[],tk=DATA.tickers||{},byT={},seen=[];
+  uni.forEach(r=>{if(r.kind!=="stock")return;if(mkt!=="ALL"&&r.market!==mkt)return;(byT[r.track]=byT[r.track]||[]).push(r);if(!seen.includes(r.track))seen.push(r.track);});
+  let h="";seen.forEach(t=>{h+="<div style='margin-bottom:12px'><div class='subl'>"+TRK(t)+"</div><div class='heat'>"+byT[t].map(r=>tile(r,tk[r.yf])).join("")+"</div></div>";});return h;}
+function CNN(){return ["000001.SS","399001.SZ","399006.SZ","000300.SS"];}
+function USN(){return ["^GSPC","^IXIC","^SOX","^DJI"];}
+function breadthOf(mkt){const a=Object.values(DATA.tickers||{}).filter(x=>x.market===mkt&&x.kind==="stock"&&x.pct!=null);
+  return {up:a.filter(x=>x.pct>0).length,dn:a.filter(x=>x.pct<0).length,fl:a.filter(x=>x.pct===0).length,n:a.length};}
+function trackAvgList(){const uni=DATA.universe||[],tk=DATA.tickers||{},m={},seen=[];
+  uni.forEach(r=>{if(r.kind!=="stock")return;if(!seen.includes(r.track))seen.push(r.track);const q=tk[r.yf];if(q&&q.pct!=null)(m[r.track]=m[r.track]||[]).push(q.pct);});
+  return seen.filter(t=>m[t]).map(t=>({t,a:m[t].reduce((x,y)=>x+y,0)/m[t].length})).sort((x,y)=>x.a-y.a);}
+
+/* ============ 大盘总览 ============ */
+function icard(sym,q){
+  if(!q)return "<button class='icard' disabled><div class='nm'>—</div><div class='pt'>—</div></button>";
+  const d=q.pct!=null?dir(q.pct):"flat";
+  return "<button class='icard "+(d==='up'?'u':d==='down'?'d':'')+"' onclick=\"go('"+sym+"')\"><div class='nm'>"+bi(q.name,q.en)+"</div><div class='pt'>"+(q.price!=null?q.price.toLocaleString():"—")+"</div><div class='ch' style='color:"+col(q.pct)+"'>"+fmtp(q.pct)+"</div></button>";
+}
+function renderOverview(){
+  const idx=DATA.indices||{};
+  const heatLbl={ALL:L("全部 All","All"),CN:L("A股","A-Shares"),US:L("美股 US","US")};
+  const heatBtns="<span id='heatbtns' style='margin-left:auto;align-self:center;display:flex;gap:6px'>"+["ALL","CN","US"].map(m=>"<button class='hb "+(heatMkt===m?"on":"")+"' data-hm='"+m+"'>"+heatLbl[m]+"</button>").join("")+"</span>";
+  let h="<div class='secTitle'>"+L("全市场热力树图","Market Heatmap")+" <span>"+L("Market Heatmap","Treemap")+"</span>"+heatBtns+"</div>";
+  h+="<div class='panel full' style='margin-bottom:18px;width:100vw;position:relative;left:50%;margin-left:-50vw;border-radius:0;border-left:none;border-right:none'>"
+    +"<div class='pt' id='heatpt' style='padding:0 16px'><span class='ps'>"+L("颜色=涨跌 · 点击板块标题放大该板块、点击个股进入详情","Color = change · click a sector title to zoom in, click a stock for details")+"</span></div>"
+    +"<div id='heatbar' style='display:none;padding:6px 16px 10px'></div>"
+    +(HASE()?"<div id='c_tree' class='chart' style='height:92vh;min-height:640px'></div>":("<div id='cssheat' style='max-height:82vh;overflow:auto;padding:0 12px'>"+cssHeatmapHTML(heatMkt)+"</div>"))+"</div>";
+  h+="<div class='secTitle'>"+L("A股大盘","China A-Shares")+" <span>China A-Shares</span></div><div class='grid'>"+CNN().map(s=>icard(s,idx[s])).join("")+"</div>";
+  h+="<div class='secTitle'>"+L("美股大盘","US Markets")+" <span>US Markets</span></div><div class='grid'>"+USN().map(s=>icard(s,idx[s])).join("")+"</div>";
+  const cn=breadthOf("CN"),us=breadthOf("US");
+  h+="<div class='secTitle'>"+L("市场宽度","Breadth")+" <span>Breadth</span></div><div class='grid bre'>"+
+    "<div class='icard' style='cursor:default'><div class='nm'>"+L("A股 A-Shares","A-Shares")+"</div><div class='ch'><b class='u'>"+cn.up+" ↑</b> / <b class='d'>"+cn.dn+" ↓</b> <span style='color:var(--dim)'>· "+L("共 ","total ")+cn.n+"</span></div></div>"+
+    "<div class='icard' style='cursor:default'><div class='nm'>"+L("美股 US","US")+"</div><div class='ch'><b class='u'>"+us.up+" ↑</b> / <b class='d'>"+us.dn+" ↓</b> <span style='color:var(--dim)'>· "+L("共 ","total ")+us.n+"</span></div></div></div>";
+  const idxOpts=[...CNN(),...USN()].filter(s=>(DATA.history||{})[s]);
+  const sel=idxOpts.includes("^SOX")?"^SOX":(idxOpts[0]||null);
+  h+="<div class='secTitle'>"+L("图表分析","Charts")+" <span>Charts</span></div><div class='charts'>";
+  h+="<div class='panel full'><div class='pt'>"+L("指数 K 线 + 量","Index K-Line + Volume")+" <select id='ksel'>"+idxOpts.map(s=>"<option value='"+s+"' "+(s===sel?"selected":"")+">"+(idx[s]?(LANG==="en"?(idx[s].en||idx[s].name):idx[s].name):s)+"</option>").join("")+"</select><span class='ps'>"+L("近 60 日","last 60 days")+"</span></div>"+chartCell("c_k","320px")+"</div>";
+  h+="<div class='panel full'><div class='pt'>"+L("指数走势(归一化=100)","Index Trend (normalized=100)")+" <span class='ps'>"+L("相对强弱","relative strength")+"</span></div>"+chartCell("c_line","280px")+"</div>";
+  h+="<div class='panel'><div class='pt'>"+L("赛道平均涨跌幅","Track Avg Change")+"</div>"+chartCell("c_track","360px")+"</div>";
+  h+="<div class='panel'><div class='pt'>"+L("领涨/领跌 TOP15","Top/Bottom 15 Movers")+"</div>"+chartCell("c_mov","360px")+"</div>";
+  h+="<div class='panel'><div class='pt'>"+L("涨跌分布","Up/Down Split")+"</div>"+chartCell("c_pie","280px")+"</div>";
+  h+="<div class='panel'><div class='pt'>"+L("市场情绪","Sentiment")+"</div>"+chartCell("c_gauge","280px")+"</div>";
+  h+="</div>";
+  document.getElementById("overview").innerHTML=h;
+  charts.forEach(c=>{try{c.dispose();}catch(e){}});charts=[];
+  drawTree(heatMkt);drawK(sel);drawLine();drawTrack();drawMovers();drawPie(cn,us);drawGauge(cn,us);
+  const ks=document.getElementById("ksel");if(ks)ks.onchange=e=>drawK(e.target.value);
+  document.querySelectorAll("#heatbtns .hb").forEach(b=>b.onclick=()=>{heatMkt=b.dataset.hm;
+    document.querySelectorAll("#heatbtns .hb").forEach(x=>x.classList.toggle("on",x.dataset.hm===heatMkt));refreshHeat();});
+}
+function refreshHeat(){renderHeatbar();if(HASE())drawTree(heatMkt);else{const el=document.getElementById("cssheat");if(el)el.innerHTML=cssHeatmapHTML(heatMkt);}}
+function tcol(p){const a=Math.min(Math.abs(p)/4,1),b=(p>0?UP_RGB:(p<0?DOWN_RGB:"107,115,132")).split(",").map(Number),f=0.32+0.6*a;
+  return "rgb("+b.map(x=>Math.round(x*f+22*(1-f))).join(",")+")";}
+function sectorBullets(track,mkt){
+  const uni=DATA.universe||[],tk=DATA.tickers||{},ps=[],seen=new Set();
+  uni.forEach(r=>{if(r.kind!=="stock"||r.track!==track)return;if(mkt!=="ALL"&&r.market!==mkt)return;if(seen.has(r.code))return;const q=tk[r.yf];if(!q||q.pct==null)return;seen.add(r.code);ps.push({name:r.name,pct:q.pct});});
+  if(!ps.length)return [L("该板块暂无数据。","No data for this sector.")];
+  ps.sort((a,b)=>b.pct-a.pct);
+  const up=ps.filter(x=>x.pct>0).length,dn=ps.filter(x=>x.pct<0).length,avg=ps.reduce((a,b)=>a+b.pct,0)/ps.length,adv=Math.round(up/ps.length*100);
+  const sep=L("、",", ");
+  return [L("赛道均值 ","Track avg ")+fmtp(+avg.toFixed(2))+L("，"+up+" 涨 / "+dn+" 跌(共 "+ps.length+" 只),上涨占比 "+adv+"%。",", "+up+" up / "+dn+" down (of "+ps.length+"), "+adv+"% advancing."),
+    L("领涨:","Leaders: ")+ps.slice(0,3).map(x=>x.name+" "+fmtp(x.pct)).join(sep)+L("。","."),
+    L("领跌:","Laggards: ")+ps.slice(-3).reverse().map(x=>x.name+" "+fmtp(x.pct)).join(sep)+L("。","."),
+    (adv>=60?L("板块整体偏强,资金活跃。","Sector broadly strong, active flows."):adv<=40?L("板块整体偏弱,注意回避。","Sector broadly weak, stay cautious."):L("板块涨跌分化,以个股为主。","Mixed sector, stock-picking market."))];
+}
+function renderHeatbar(){
+  const bar=document.getElementById("heatbar"),pt=document.getElementById("heatpt");if(!bar)return;
+  if(heatSector){const en=(DATA.universe||[]).find(r=>r.track===heatSector);const ten=en?en.track_en:"";
+    let h="<button class='backbtn' onclick='exitSector()'>← "+L("返回全部 Back","Back to all")+"</button>";
+    h+="<span style='font-size:22px;font-weight:700;margin:0 14px;vertical-align:middle'>"+TRK(heatSector)+((ten&&LANG==="zh")?" <span style='font-size:12px;color:var(--mut);font-weight:400'>"+ten+"</span>":"")+"</span>";
+    h+="<ul style='margin:8px 0 0;padding-left:18px;color:#cfd6e4;font-size:12.5px;line-height:1.7'>"+sectorBullets(heatSector,heatMkt).map(b=>"<li>"+b+"</li>").join("")+"</ul>";
+    bar.innerHTML=h;bar.style.display="block";if(pt)pt.style.display="none";
+  }else{bar.style.display="none";if(pt)pt.style.display="";}
+}
+function enterSector(t){heatSector=t;renderHeatbar();drawTree(heatMkt);window.scrollTo(0,0);}
+function exitSector(){heatSector=null;renderHeatbar();drawTree(heatMkt);}
+function drawTree(mkt){
+  mkt=mkt||"ALL";const el=document.getElementById("c_tree");if(!el||!HASE())return;
+  const c=echarts.getInstanceByDom(el)||mk("c_tree");if(!c)return;
+  const uni=DATA.universe||[],tk=DATA.tickers||{},byT={},seen=[];
+  uni.forEach(r=>{if(r.kind!=="stock")return;if(mkt!=="ALL"&&r.market!==mkt)return;if(!seen.includes(r.track))seen.push(r.track);const q=tk[r.yf];if(!q||q.pct==null)return;
+    (byT[r.track]=byT[r.track]||{});byT[r.track][r.yf]={name:r.name,code:r.code,en:r.en,pct:q.pct,yf:r.yf};});
+  function leaf(o){return {name:o.name,value:Math.abs(o.pct)+0.4,sym:o.yf,label:{formatter:o.name+"  "+o.code+"\n"+fmtp(o.pct)},itemStyle:{color:tcol(o.pct)}};}
+  let data;
+  if(heatSector&&byT[heatSector]){data=Object.values(byT[heatSector]).map(leaf);}
+  else{data=seen.filter(t=>byT[t]).map(t=>({name:TRK(t),trackKey:t,children:Object.values(byT[t]).map(leaf)}));}
+  c.setOption({...base,tooltip:{formatter:p=>p.name+(p.data&&p.data.sym?"  "+(fmtp((tk[p.data.sym]||{}).pct)):"")},
+    series:[{type:"treemap",roam:false,nodeClick:false,breadcrumb:{show:false},
+      left:0,right:0,top:0,bottom:0,width:"100%",height:"100%",
+      upperLabel:{show:true,height:34,color:"#ffffff",fontSize:20,fontWeight:600},
+      itemStyle:{borderColor:"#0a0e16",borderWidth:1,gapWidth:2},
+      levels:[{itemStyle:{borderColor:"#0a0e16",borderWidth:3,gapWidth:4},upperLabel:{show:true,height:36,fontSize:22,color:"#ffffff",fontWeight:600}},{itemStyle:{gapWidth:1}}],
+      emphasis:{itemStyle:{borderColor:"#fff",borderWidth:2}},
+      label:{color:"#fff",fontSize:11,lineHeight:14},data}]},true);
+  c.off("click");c.on("click",p=>{if(!p.data)return;if(p.data.sym){go(p.data.sym);return;}if(p.data.trackKey&&!heatSector)enterSector(p.data.trackKey);});
+}
+function drawK(sym){const h=(DATA.history||{})[sym];const c=mk("c_k");if(!c||!h)return;
+  const kd=h.c.map((_,i)=>[h.o[i],h.c[i],h.l[i],h.h[i]]);
+  c.setOption({...base,tooltip:{trigger:"axis",axisPointer:{type:"cross"}},
+    grid:[{left:48,right:14,top:12,height:"60%"},{left:48,right:14,top:"75%",height:"16%"}],
+    xAxis:[{type:"category",data:h.d,axisLine:{lineStyle:{color:AX}},axisLabel:{color:TXT}},{type:"category",gridIndex:1,data:h.d,axisLabel:{show:false}}],
+    yAxis:[{scale:true,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},{gridIndex:1,splitLine:{show:false},axisLabel:{show:false}}],
+    dataZoom:[{type:"inside",xAxisIndex:[0,1],start:55,end:100},{type:"slider",xAxisIndex:[0,1],bottom:2,height:13,start:55,end:100,borderColor:GRID,textStyle:{color:TXT}}],
+    series:[{type:"candlestick",data:kd,itemStyle:{color:UP,color0:DOWN,borderColor:UP,borderColor0:DOWN}},
+      {type:"bar",xAxisIndex:1,yAxisIndex:1,data:h.v,itemStyle:{color:"#2a3447"}}]});
+}
+function drawLine(){const c=mk("c_line");if(!c)return;const hist=DATA.history||{},idx=DATA.indices||{};
+  const syms=[...CNN(),...USN()].filter(s=>hist[s]&&hist[s].c.length>2);if(!syms.length)return;
+  const L=Math.min(...syms.map(s=>hist[s].c.length)),refD=hist[syms[0]].d.slice(-L);
+  const pal=["#ff4d57","#ff8aa0","#f5a623","#ffd17a","#3b82f6","#6fb0ff","#1fc78b","#7ee0bf"];
+  const series=syms.map((s,i)=>{const arr=hist[s].c.slice(-L),b=arr[0];
+    return {name:idx[s]?(LANG==="en"?(idx[s].en||idx[s].name):idx[s].name):s,type:"line",showSymbol:false,smooth:true,lineStyle:{width:1.6,color:pal[i%8]},itemStyle:{color:pal[i%8]},data:arr.map(v=>+(v/b*100).toFixed(2))};});
+  c.setOption({...base,tooltip:{trigger:"axis"},legend:{type:"scroll",textStyle:{color:TXT},top:0},
+    grid:{left:44,right:14,top:34,bottom:24},xAxis:{type:"category",data:refD,axisLine:{lineStyle:{color:AX}},axisLabel:{color:TXT}},
+    yAxis:{scale:true,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},series});
+}
+function drawTrack(){const c=mk("c_track");if(!c)return;const list=trackAvgList();if(!list.length)return;
+  c.setOption({...base,tooltip:{trigger:"axis",axisPointer:{type:"shadow"},valueFormatter:v=>fmtp(v)},grid:{left:120,right:42,top:8,bottom:8},
+    xAxis:{type:"value",axisLabel:{color:TXT,formatter:"{value}%"},splitLine:{lineStyle:{color:GRID}}},
+    yAxis:{type:"category",data:list.map(x=>TRK(x.t)),axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},
+    series:[{type:"bar",data:list.map(x=>({value:+x.a.toFixed(2),itemStyle:{color:col(x.a),borderRadius:[0,3,3,0]}})),label:{show:true,position:"right",color:TXT,formatter:p=>fmtp(p.value)},barWidth:"58%"}]});
+}
+function drawMovers(){const c=mk("c_mov");if(!c)return;
+  const rows=Object.values(DATA.tickers||{}).filter(x=>x.kind==="stock"&&x.pct!=null).sort((a,b)=>b.pct-a.pct);
+  const top=rows.slice(0,15),bot=rows.slice(-15);const sel=[...bot.slice().reverse(),...top.slice().reverse()];
+  c.setOption({...base,tooltip:{trigger:"axis",axisPointer:{type:"shadow"},valueFormatter:v=>fmtp(v)},grid:{left:78,right:46,top:8,bottom:8},
+    xAxis:{type:"value",axisLabel:{color:TXT,formatter:"{value}%"},splitLine:{lineStyle:{color:GRID}}},
+    yAxis:{type:"category",data:sel.map(x=>x.name),axisLabel:{color:TXT,fontSize:10},axisLine:{lineStyle:{color:AX}}},
+    series:[{type:"bar",data:sel.map(x=>({value:+x.pct.toFixed(2),itemStyle:{color:col(x.pct)}})),label:{show:true,position:"right",color:TXT,fontSize:10,formatter:p=>fmtp(p.value)},barWidth:"62%"}]});
+}
+function drawPie(cn,us){const c=mk("c_pie");if(!c)return;const up=cn.up+us.up,dn=cn.dn+us.dn,fl=cn.fl+us.fl;
+  c.setOption({...base,tooltip:{trigger:"item"},legend:{bottom:0,textStyle:{color:TXT}},
+    series:[{type:"pie",radius:["46%","72%"],center:["50%","46%"],itemStyle:{borderColor:"#0e131d",borderWidth:2},label:{color:TXT,formatter:"{b} {c}"},
+      data:[{name:L("上涨","Up"),value:up,itemStyle:{color:UP}},{name:L("下跌","Down"),value:dn,itemStyle:{color:DOWN}},{name:L("平盘","Flat"),value:fl,itemStyle:{color:FLAT}}]}]});
+}
+function drawGauge(cn,us){const c=mk("c_gauge");if(!c)return;const n=cn.n+us.n,up=cn.up+us.up,adv=n?+(up/n*100).toFixed(1):0;
+  const cc=adv>=60?UP:(adv<=40?DOWN:"#f5a623");
+  c.setOption({...base,series:[{type:"gauge",min:0,max:100,radius:"92%",center:["50%","58%"],progress:{show:true,width:14,itemStyle:{color:cc}},
+    axisLine:{lineStyle:{width:14,color:[[1,"#1f2838"]]}},pointer:{itemStyle:{color:cc}},axisTick:{show:false},splitLine:{distance:-14,length:10,lineStyle:{color:"#2a3447"}},
+    axisLabel:{color:TXT,distance:-2,fontSize:9},anchor:{show:false},title:{offsetCenter:[0,"28%"],color:TXT,fontSize:11},
+    detail:{formatter:"{value}%",color:cc,fontSize:26,offsetCenter:[0,"-4%"]},data:[{value:adv,name:L("上涨占比","% Advancing")}]}]});
+}
+
+/* ============ 排名 ============ */
+let rs={market:"ALL",kind:"ALL"};
+function renderRank(){const el=document.getElementById("rank");
+  const mkL={ALL:L("全部","All"),CN:L("A股","A-Shares"),US:L("美股","US")};
+  let h="<div class='controls'><span style='font-size:11px;color:var(--dim)'>"+L("市场","Market")+"</span>";
+  ["ALL","CN","US"].forEach(m=>h+="<button data-mk='"+m+"' class='"+(rs.market===m?"on":"")+"'>"+mkL[m]+"</button>");
+  h+="<span style='font-size:11px;color:var(--dim);margin-left:6px'>"+L("类型","Type")+"</span>";
+  [["ALL",L("全部","All")],["stock",L("个股","Stocks")],["etf","ETF"]].forEach(([k,l])=>h+="<button data-kd='"+k+"' class='"+(rs.kind===k?"on":"")+"'>"+l+"</button>");
+  h+="<span style='font-size:11px;color:var(--dim);margin-left:6px'>"+L("用顶部 🔍 搜索框查名称/代码","Use the 🔍 box above to search name / code")+"</span></div><div id='rt'></div>";el.innerHTML=h;
+  el.querySelectorAll("[data-mk]").forEach(b=>b.onclick=()=>{rs.market=b.dataset.mk;renderRank();});
+  el.querySelectorAll("[data-kd]").forEach(b=>b.onclick=()=>{rs.kind=b.dataset.kd;renderRank();});
+  drawRT();
+}
+function drawRT(){const gs=document.getElementById("gsearch");const q=((gs&&gs.value)||"").toLowerCase();
+  let rows=Object.entries(DATA.tickers||{}).map(([yf,x])=>({yf,...x})).filter(x=>x.pct!=null);
+  if(rs.market!=="ALL")rows=rows.filter(x=>x.market===rs.market);
+  if(rs.kind!=="ALL")rows=rows.filter(x=>x.kind===rs.kind);
+  if(q)rows=rows.filter(x=>((x.name+x.code+(x.en||"")).toLowerCase()).includes(q));
+  rows.sort((a,b)=>b.pct-a.pct);
+  let h="<table><thead><tr><th>#</th><th>"+L("名称 Name","Name")+"</th><th style='text-align:right'>"+L("代码","Code")+"</th><th>"+L("市场","Market")+"</th><th style='text-align:right'>"+L("价","Price")+"</th><th style='text-align:right'>"+L("涨跌幅","Change")+"</th></tr></thead><tbody>";
+  rows.forEach((x,i)=>h+="<tr class='clk' onclick=\"go('"+x.yf+"')\"><td class='rk'>"+(i+1)+"</td><td>"+bi(x.name,x.en)+(x.kind==="etf"?"<span class='k-etf'>ETF</span>":"")+"</td><td class='num'>"+x.code+"</td><td><span class='mtag m-"+x.market+"'>"+(x.market==="CN"?L("A股","CN"):L("美股","US"))+"</span></td><td class='num'>"+x.price.toLocaleString()+"</td><td class='pct' style='color:"+col(x.pct)+"'>"+fmtp(x.pct)+"</td></tr>");
+  h+="</tbody></table>";
+  if(rows.length){document.getElementById("rt").innerHTML=h;}
+  else{const qe=q.replace(/['"\\]/g,"");
+    document.getElementById("rt").innerHTML="<div class='empty'>"+L("库中无匹配","No match in library")+(q?(" “"+q+"”"):"")+"。"+
+      (qe?"<br><button class='backbtn' style='margin-top:10px' onclick=\"liveSearch('"+qe+"')\">🔍 "+L("现场查询/搜索 ","Live lookup ")+"“"+qe+"”</button><div style='font-size:11px;color:var(--dim);margin-top:8px'>"+L("支持中文名/英文名/代码/Ticker,如 特斯拉、TSLA、贵州茅台、600519(需已部署实时后端)","Supports name / code / ticker, e.g. Tesla, TSLA, 600519 (requires deployed live backend)")+"</div>":"")+"</div>";}
+}
+function looksSym(q){return /^\d{6}(\.(SS|SZ|BJ))?$/i.test(q)||/^[A-Za-z][A-Za-z.\-]{0,7}$/.test(q);}
+/* 现场查询:代码/Ticker 直接拉;中文名/英文名 → /api/search 出候选点选 */
+async function liveSearch(q){
+  q=(q||"").trim();if(!q)return;const rt=document.getElementById("rt");
+  if(looksSym(q)){let sym=q.toUpperCase();if(/^\d{6}$/.test(sym))sym+=cnSuffix(sym);return fetchAdhoc(sym);}
+  if(DATA&&DATA._preview){if(rt)rt.innerHTML="<div class='empty'>"+L("预览模式无法按名称搜索(需后端);可直接输入代码/Ticker,如 TSLA、600519。","Name search needs the live backend; in preview enter a code/ticker directly, e.g. TSLA, 600519.")+"</div>";return;}
+  if(rt)rt.innerHTML="<div class='empty'>"+L("正在搜索 ","Searching ")+"“"+q+"” …</div>";
+  try{
+    const r=await fetch("/api/search?q="+encodeURIComponent(q));const d=await r.json();
+    const list=(d&&d.results)||[];if(!list.length)throw 0;
+    let h="<div class='empty'>"+L("“"+q+"” 的候选(点击查看):","Candidates for “"+q+"” (click to view):")+"<div style='display:flex;flex-direction:column;gap:6px;max-width:400px;margin:12px auto 0'>";
+    list.slice(0,8).forEach(x=>{const nm=(x.name||"").replace(/['\\]/g,"");h+="<button class='backbtn' style='text-align:left' onclick=\"fetchAdhoc('"+x.sym+"','"+nm+"')\">"+x.name+" <span style='color:var(--dim);font-family:var(--mono);font-size:11px'>"+x.sym+" · "+(x.market==='CN'?L('A股','CN'):L('美股','US'))+"</span></button>";});
+    h+="</div></div>";if(rt)rt.innerHTML=h;
+  }catch(e){if(rt)rt.innerHTML="<div class='empty'>"+L("未搜到 ","No result for ")+"“"+q+"”"+L("。可改用代码/Ticker,或确认后端(/api/search)已部署。",". Try a code/ticker, or confirm the backend (/api/search) is deployed.")+"</div>";}
+}
+async function fetchAdhoc(sym,name){
+  if(DATA&&DATA._preview){injectAdhoc(sym,name||sym,null);return;}
+  const rt=document.getElementById("rt");if(rt)rt.innerHTML="<div class='empty'>"+L("正在拉取 ","Fetching ")+(name||sym)+" …</div>";
+  try{const r=await fetch("/api/stock?sym="+encodeURIComponent(sym),{cache:"no-store"});if(!r.ok)throw 0;
+    const d=await r.json();if(!d||d.error||!d.history||!d.history.c||d.history.c.length<2)throw 0;injectAdhoc(d.sym,name||d.name,d);}
+  catch(e){if(rt)rt.innerHTML="<div class='empty'>"+L("未查到 ","Not found: ")+(name||sym)+L(",或实时后端未部署。",", or the live backend isn't deployed.")+"</div>";}
+}
+function injectAdhoc(sym,name,d){
+  const mkt=/\.(SS|SZ|BJ)$/.test(sym)?"CN":"US";
+  const h=(d&&d.history)?d.history:genHist(sym);
+  DATA.history[sym]=h;
+  const last=d?d.price:h.c[h.c.length-1],prev=d?d.prev:h.c[h.c.length-2];
+  DATA.tickers[sym]={code:sym.split(".")[0],name:name||sym,en:null,market:mkt,kind:"stock",
+    price:last,prev:prev,pct:(d&&d.pct!=null)?d.pct:+((last-prev)/prev*100).toFixed(2),_adhoc:true};
+  go(sym);
+}
+
+/* ============ 赛道热力 ============ */
+function tile(r,q){
+  const click="onclick=\"go('"+r.yf+"')\"";
+  const code="<span class='tcode'>"+r.code+"</span>";
+  if(!q||q.pct==null)return "<button class='tile flat' "+click+"><span class='tn'>"+bi(r.name,r.en)+"</span>"+code+"<span class='tp' style='color:var(--dim)'>—</span></button>";
+  const p=q.pct,inten=Math.min(Math.abs(p)/4,1),a=(0.14+0.6*inten).toFixed(2);
+  const rgb=p>0?UP_RGB:(p<0?DOWN_RGB:"107,115,132");
+  const glow=inten>0.45?"box-shadow:0 0 12px rgba("+rgb+","+(0.3*inten).toFixed(2)+");":"";
+  return "<button class='tile' "+click+" style='background:rgba("+rgb+","+a+");"+glow+"'><span class='tn'>"+bi(r.name,r.en)+"</span>"+code+"<span class='tp'>"+fmtp(p)+"</span></button>";
+}
+function renderTracks(){const uni=DATA.universe||[],tk=DATA.tickers||{},byT={},seen=[],info={};
+  uni.forEach(r=>{(byT[r.track]=byT[r.track]||[]).push(r);if(!seen.includes(r.track)){seen.push(r.track);info[r.track]={layer:r.layer,layer_en:r.layer_en,stars:r.stars,en:r.track_en};}});
+  let h="";
+  seen.forEach(tname=>{const recs=byT[tname],ifo=info[tname];
+    const ps=recs.filter(r=>r.kind==="stock"&&tk[r.yf]&&tk[r.yf].pct!=null).map(r=>tk[r.yf].pct);
+    const avg=ps.length?ps.reduce((a,b)=>a+b,0)/ps.length:null,up=ps.filter(p=>p>0).length,dn=ps.filter(p=>p<0).length,ac=avg==null?"var(--mut)":col(avg);
+    const tnMain=LANG==="en"?(ifo.en||tname):tname,tnSub=LANG==="en"?"":(ifo.en||"");
+    h+="<div class='track'><div class='thead'><span class='tn'>"+tnMain+"<span class='en'>"+tnSub+"</span></span><span class='ly'>"+(LANG==="en"?(ifo.layer_en||ifo.layer):ifo.layer)+"</span><span class='stars'>"+stars5(ifo.stars)+"</span><span class='avgbadge' style='color:"+ac+";border-color:"+ac+"33'>"+L("赛道均值 ","Track avg ")+fmtp(avg)+"</span></div><div class='breadth'>"+up+" ↑ / "+dn+" ↓</div>";
+    ["US","CN"].forEach(mkt=>{const list=recs.filter(r=>r.market===mkt);if(!list.length)return;
+      h+="<div class='subl'>"+(mkt==="US"?L("美股 US","US"):L("A股 A-Shares","A-Shares"))+"</div><div class='heat'>"+list.map(r=>tile(r,tk[r.yf])).join("")+"</div>";});
+    h+="</div>";});
+  document.getElementById("tracks").innerHTML=uni.length?h:"<div class='empty'>"+L("尚无赛道数据","No track data yet")+"</div>";
+}
+function stars5(n){let s="";for(let i=0;i<5;i++)s+=i<n?"★":"<span class='o'>★</span>";return s;}
+
+/* ============ 大盘顶底(三因子·趋势层,前端实时计算) ============ */
+function weeklyCloses(c){const w=[];for(let i=c.length-1;i>=0;i-=5)w.push(c[i]);return w.reverse();}
+function topBottomSignal(sym){
+  const h=(DATA.history||{})[sym];if(!h||!h.c||h.c.length<60)return null;
+  const c=h.c,n=c.length,q=(DATA.indices||{})[sym]||{};
+  const price=q.price!=null?q.price:c[n-1],pc=q.pct!=null?q.pct:0;
+  const ma=k=>{const s=c.slice(Math.max(0,n-k));return s.reduce((a,b)=>a+b,0)/s.length;};
+  const ma20=ma(20),ma60=ma(60),dM20=(price-ma20)/ma20*100,dM60=(price-ma60)/ma60*100;
+  const wk=weeklyCloses(c),w20=wk.length>=20?wk.slice(-20).reduce((a,b)=>a+b,0)/20:null;
+  const wm=MACD(wk),wbull=wm.dif.length>1?wm.dif[wm.dif.length-1]>wm.dea[wm.dea.length-1]:null;
+  const aboveW20=w20!=null?price>w20:null,belowMA20=price<ma20,belowMA60=price<ma60;
+  let light,label;
+  if(belowMA60&&aboveW20===false&&wbull===false){light="🔴";label=L("逃顶3·清仓线","Exit-3 · Sell all");}
+  else if(belowMA20&&wbull===false){light="🟠";label=L("逃顶2·减仓","Exit-2 · Trim");}
+  else if(dM20>25){light="🟡";label=L("逃顶1·预警","Exit-1 · Warning");}
+  else if(!belowMA20&&!belowMA60&&wbull===true&&aboveW20===true&&dM60<8){light="🔵";label=L("抄底·右侧","Buy · Right-side");}
+  else if(dM60<-15){light="🟢";label=L("抄底·观察","Buy · Watch");}
+  else{light="⚪";label=L("中性","Neutral");}
+  return {name:q.name||sym,price,pc,dM20,dM60,aboveW20,wbull,light,label};
+}
+function bucketOf(l){return (l==="🔴"||l==="🟠"||l==="🟡")?"逃顶":((l==="🟢"||l==="🔵")?"抄底":"中性");}
+function stockTB(yf){
+  const h=(DATA.history||{})[yf];if(!h||!h.c||h.c.length<60)return null;
+  const c=h.c,n=c.length,q=(DATA.tickers||{})[yf]||{};
+  const price=q.price!=null?q.price:c[n-1],pc=q.pct!=null?q.pct:0;
+  const ma=k=>{const s=c.slice(Math.max(0,n-k));return s.reduce((a,b)=>a+b,0)/s.length;};
+  const ma20=ma(20),ma60=ma(60),dM20=(price-ma20)/ma20*100,dM60=(price-ma60)/ma60*100;
+  const wk=weeklyCloses(c),w20=wk.length>=20?wk.slice(-20).reduce((a,b)=>a+b,0)/20:null;
+  const wm=MACD(wk),wbull=wm.dif.length>1?wm.dif[wm.dif.length-1]>wm.dea[wm.dea.length-1]:null;
+  const aW=w20!=null?price>w20:null,bM20=price<ma20,bM60=price<ma60;
+  let l;
+  if(bM60&&aW===false&&wbull===false)l="🔴";
+  else if(bM20&&wbull===false)l="🟠";
+  else if(dM20>25)l="🟡";
+  else if(!bM20&&!bM60&&wbull===true&&aW===true&&dM60<8)l="🔵";
+  else if(dM60<-15)l="🟢";
+  else l="⚪";
+  return {yf,name:q.name,code:q.code,pc,dM20,dM60,light:l,bucket:bucketOf(l)};
+}
+function marketTB(market){
+  const uni=DATA.universe||[],seen=new Set(),sig=[];
+  uni.forEach(r=>{if(r.kind!=="stock"||r.market!==market||seen.has(r.yf))return;seen.add(r.yf);const s=stockTB(r.yf);if(s){s.name=r.name;s.code=r.code;sig.push(s);}});
+  const pick=(b,fn)=>sig.filter(x=>x.bucket===b).sort((a,z)=>fn(z)-fn(a)).slice(0,10);
+  return {"逃顶":pick("逃顶",x=>x.dM20),"中性":pick("中性",x=>-Math.abs(x.dM20)),"抄底":pick("抄底",x=>-x.dM60)};
+}
+function tbRow(s){return "<div class='tbrow' onclick=\"go('"+s.yf+"')\"><span class='tbn'>"+s.light+" "+s.name+" <em>"+s.code+"</em></span><span class='pct' style='color:"+col(s.pc)+"'>"+fmtp(s.pc)+"</span></div>";}
+function marketBlock(market,label){
+  const g=marketTB(market);let h="<div class='tbcol'><div class='tbhd'>"+label+" <span style='font-size:11px;color:var(--dim);font-weight:400'>"+L("各10只","top 10 each")+"</span></div>";
+  [["逃顶",L("🔴 逃顶","🔴 Exit"),UP],["中性",L("⚪ 中性","⚪ Neutral"),"#f5a623"],["抄底",L("🟢 抄底","🟢 Buy"),DOWN]].forEach(([k,t,c])=>{
+    h+="<div class='tbgrp' style='color:"+c+"'>"+t+" · "+g[k].length+"</div>"+(g[k].length?g[k].map(tbRow).join(""):"<div style='font-size:11px;color:var(--dim);padding:3px'>"+L("暂无(需历史数据)","None (needs history)")+"</div>");});
+  return h+"</div>";
+}
+function topBottomHTML(){
+  const syms=[["000001.SS",L("上证","SSE")],["000300.SS",L("沪深300","CSI 300")],["399006.SZ",L("创业板","ChiNext")],["^GSPC",L("标普500","S&P 500")],["^IXIC",L("纳指100","Nasdaq 100")],["^SOX",L("费半(台积电)","SOX (TSMC)")]];
+  const cnA=Object.values(DATA.tickers||{}).filter(x=>x.market==="CN"&&x.kind==="stock"&&x.pct!=null);
+  const up=cnA.filter(x=>x.pct>0).length,dn=cnA.filter(x=>x.pct<0).length;
+  const tl=trackAvgList(),upT=tl.filter(x=>x.a>0).length,dnT=tl.filter(x=>x.a<0).length;
+  let h="<div class='brief'><h3>"+L("大盘顶底 · 趋势与宽度信号","Market Top/Bottom · Trend & Breadth")+" <span class='stratbadge'>"+L("三因子·扳机层","3-Factor · Trigger")+"</span></h3>";
+  h+="<div class='st'>"+L("估值×趋势×情绪三因子 · 本栏为可实时计算的【趋势层 + A股宽度】;【估值许可证层 + VIX + 科创50/恒指】见每日监控日报","Valuation × Trend × Sentiment · this panel is the real-time Trend layer + A-share breadth; the Valuation/VIX layer is in the daily monitor report")+"</div>";
+  h+="<div class='intro'>"+L("A股宽度:观察池 ","A-share breadth: pool ")+up+L(" 涨 / "," up / ")+dn+L(" 跌;赛道 "," down; tracks ")+upT+L(" 涨 / "," up / ")+dnT+L(" 跌 —— "," down — ")+(up>dn*1.3?L("结构偏强","structurally strong"):dn>up*1.3?L("结构偏弱","structurally weak"):L("涨跌分化","mixed"))+L("。",".")+"</div>";
+  h+="<div style='overflow-x:auto'><table style='margin-top:4px'><thead><tr><th>"+L("市场","Market")+"</th><th style='text-align:right'>"+L("现价","Price")+"</th><th style='text-align:right'>"+L("涨跌","Chg")+"</th><th style='text-align:right'>"+L("距MA20","vs MA20")+"</th><th style='text-align:right'>"+L("距MA60","vs MA60")+"</th><th>"+L("20周线","20W MA")+"</th><th>"+L("周MACD","W-MACD")+"</th><th>"+L("状态灯","Signal")+"</th></tr></thead><tbody>";
+  syms.forEach(([s,nm])=>{const r=topBottomSignal(s);if(!r)return;
+    h+="<tr><td style='font-weight:600'>"+nm+"</td><td class='num'>"+f2(r.price)+"</td><td class='pct' style='color:"+col(r.pc)+"'>"+fmtp(r.pc)+"</td>"+
+       "<td class='num' style='color:"+col(r.dM20)+"'>"+(r.dM20>=0?"+":"")+r.dM20.toFixed(1)+"%</td>"+
+       "<td class='num' style='color:"+col(r.dM60)+"'>"+(r.dM60>=0?"+":"")+r.dM60.toFixed(1)+"%</td>"+
+       "<td>"+(r.aboveW20==null?"—":r.aboveW20?"<span style='color:"+UP+"'>"+L("上方","above")+"</span>":"<span style='color:"+DOWN+"'>"+L("下方","below")+"</span>")+"</td>"+
+       "<td>"+(r.wbull==null?"—":r.wbull?"<span style='color:"+UP+"'>"+L("多头","bull")+"</span>":"<span style='color:"+DOWN+"'>"+L("空头","bear")+"</span>")+"</td>"+
+       "<td style='white-space:nowrap'>"+r.light+" "+r.label+"</td></tr>";});
+  h+="</tbody></table></div>";
+  h+="<div style='font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.65'>"+L("灯口径:🔴逃顶3(破60日线+跌破20周线+周MACD死叉)｜🟠逃顶2(破20日线+周MACD死叉)｜🟡逃顶1预警(乖离MA20&gt;25%)｜⚪中性｜🟢抄底观察(深跌乖离)｜🔵抄底右侧(收复20/60日线+周线转强)。20周线≈MA100、周线为日线近似重采样。","Legend: 🔴 Exit-3 (below MA60 + below 20W + weekly MACD death cross) | 🟠 Exit-2 (below MA20 + weekly death cross) | 🟡 Exit-1 warning (MA20 gap &gt;25%) | ⚪ Neutral | 🟢 Buy watch (deep discount) | 🔵 Buy right-side (reclaim MA20/60 + weekly turns up). 20W ≈ MA100; weekly is resampled from daily.")+"<b>"+L("估值许可证层未接入本栏——勿只看趋势灯做全进全出;完整三因子(含估值分位/VIX)以每日监控日报为准。非投资建议。"," The valuation layer is not in this panel — don't go all-in/all-out on the trend light alone; the full 3-factor model (valuation percentile/VIX) is in the daily report. Not investment advice.")+"</b></div></div>";
+  return h;
+}
+
+/* ============ AI 策略 ============ */
+function renderStrategy(){
+  const s=DATA.strategy,el=document.getElementById("strategy");
+  let top="";try{top=topBottomHTML();}catch(e){}
+  if(!s){el.innerHTML=top+"<div class='empty'>"+L("个股策略将在抓数时生成(规则引擎默认开启;配置 ANTHROPIC_API_KEY 后用 Claude)。","Stock strategy is generated during the data pipeline (rule engine by default; Claude when ANTHROPIC_API_KEY is set).")+"</div>";return;}
+  const sent=ML(s,"sentiment"),sentZh=s.sentiment||"";
+  const sc=sentZh.includes("强")?UP:(sentZh.includes("弱")?DOWN:"#f5a623");
+  const risksArr=(LANG==="en"&&s.risks_en&&s.risks_en.length)?s.risks_en:(s.risks||[]);
+  let h="<div class='brief'><h3>"+L("AI 策略参考 Strategy","AI Strategy Reference")+" <span class='stratbadge'>"+ML(s,"engine")+"</span></h3>";
+  h+="<div class='st'>"+(s.stamp||"")+" · "+L("市场情绪","Sentiment")+" <b style='color:"+sc+"'>"+(sent||"—")+"</b></div>";
+  if(ML(s,"market_view"))h+="<div class='intro'>"+ML(s,"market_view")+"</div>";
+  if(s.sectors&&s.sectors.length){h+="<h4>"+L("赛道方向 Sectors","Sector View")+"</h4><div class='secgrid'>";
+    s.sectors.forEach(x=>{const w=(x.stance||"").indexOf("关注")>=0;
+      h+="<div class='seccard'><span class='sname'>"+(LANG==="en"?(x.name_en||TRK(x.name)):x.name)+"</span><span class='stance "+(w?"watch":"avoid")+"'>"+(LANG==="en"?(x.stance_en||(w?"Watch":"Avoid")):(x.stance||""))+"</span><div class='sreason'>"+ML(x,"reason")+"</div></div>";});
+    h+="</div>";}
+  if(s.picks&&s.picks.length){h+="<h4>"+L("个股关注清单 Watchlist","Watchlist")+" <span style='font-size:11px;color:var(--dim);font-weight:400'>"+L("点击查看 K 线","click for chart")+"</span></h4>";
+    s.picks.forEach(p=>{const nav=p.yf?("onclick=\"go('"+p.yf+"')\""):"";
+      h+="<div class='pick' "+nav+"><div class='pn'>"+(LANG==="en"?(p.name_en||p.name):p.name)+"<span class='pc'>"+(p.code||"")+"</span></div><div class='pr'>"+ML(p,"reason")+"</div></div>";});}
+  if(risksArr.length){h+="<h4>"+L("风险提示 Risks","Risks")+"</h4><ul>"+risksArr.map(r=>"<li>"+r+"</li>").join("")+"</ul>";}
+  h+="</div>";
+  if(ML(s,"disclaimer"))h+="<div class='brief' style='background:rgba(255,77,87,.06);border-color:#3a2330'><div style='font-size:12px;color:#e6a3ab;line-height:1.6'>⚠ "+ML(s,"disclaimer")+"</div></div>";
+  el.innerHTML=top+h;
+}
+
+/* ============ 简报 ============ */
+/* 给百分比加涨跌箭头+配色 */
+function arrowize(t){return String(t).replace(/([+\-])(\d+(?:\.\d+)?)%/g,function(m,sg,n){
+  const v=parseFloat(sg+n);
+  if(v===0)return "<span style='color:var(--flat)'>"+sg+n+"%</span>";
+  const up=v>0,c=up?UP:DOWN,a=up?"▲":"▼";
+  return "<span style='color:"+c+";font-weight:600;white-space:nowrap'>"+a+" "+sg+n+"%</span>";});}
+/* 领涨/领跌等长串 → 拆成小标签;其余整行加箭头 */
+function briefItem(raw){
+  const ci=Math.max(raw.indexOf(":"),raw.indexOf("："));
+  if(ci>=0&&raw.indexOf("、")>ci&&/(领涨|领跌|TOP|异动|回调)/.test(raw)){
+    const label=raw.slice(0,ci+1),rest=raw.slice(ci+1);
+    const parts=rest.split(/[、,]/).map(s=>s.trim()).filter(Boolean);
+    return "<li><span class='blabel'>"+label+"</span><div class='briefchips'>"+parts.map(p=>"<span class='bchip'>"+arrowize(p)+"</span>").join("")+"</div></li>";
+  }
+  return "<li>"+arrowize(raw)+"</li>";
+}
+function renderBrief(){const b=DATA.briefs||{},ord=["cn_summary","cn_preview","us_summary","us_preview"];let h="";
+  ord.forEach(k=>{const x=b[k];if(!x)return;
+    h+="<div class='brief'><h3>"+ML(x,"title")+"</h3><div class='st'>"+(x.stamp||"")+" · "+arrowize(ML(x,"headline"))+"</div>";
+    if(ML(x,"intro"))h+="<div class='intro'>"+arrowize(ML(x,"intro"))+"</div>";
+    if(x.sections)x.sections.forEach(s=>{const items=(LANG==="en"&&s.items_en&&s.items_en.length)?s.items_en:(s.items||[]);
+      h+="<div class='bsec'><h4>"+ML(s,"h")+"</h4><ul>"+items.map(briefItem).join("")+"</ul></div>";});
+    h+="</div>";});
+  document.getElementById("brief").innerHTML=h||"<div class='empty'>"+L("简报将在定时任务运行后生成。","Briefings are generated after the scheduled task runs.")+"</div>";
+}
+
+/* ============ 技术指标 ============ */
+function MA(a,n){return a.map((_,i)=>i<n-1?null:+(a.slice(i-n+1,i+1).reduce((x,y)=>x+y,0)/n).toFixed(2));}
+function EMA(a,n){const k=2/(n+1),e=[];a.forEach((v,i)=>e.push(i===0?v:+(v*k+e[i-1]*(1-k)).toFixed(4)));return e;}
+function MACD(c){const e12=EMA(c,12),e26=EMA(c,26),dif=c.map((_,i)=>+(e12[i]-e26[i]).toFixed(3)),dea=EMA(dif,9);
+  return {dif,dea,macd:dif.map((_,i)=>+((dif[i]-dea[i])*2).toFixed(3))};}
+function RSI(c,n){const r=[null];let g=0,l=0;
+  for(let i=1;i<c.length;i++){const ch=c[i]-c[i-1],gg=Math.max(ch,0),ll=Math.max(-ch,0);
+    if(i<n){g+=gg;l+=ll;r.push(null);}else if(i===n){g=(g+gg)/n;l=(l+ll)/n;r.push(+(100-100/(1+g/(l||1e-9))).toFixed(2));}
+    else{g=(g*(n-1)+gg)/n;l=(l*(n-1)+ll)/n;r.push(+(100-100/(1+g/(l||1e-9))).toFixed(2));}}return r;}
+function BOLL(c,n=20,k=2){const ma=MA(c,n),up=[],dn=[];c.forEach((_,i)=>{if(i<n-1){up.push(null);dn.push(null);return;}
+  const seg=c.slice(i-n+1,i+1),m=ma[i],sd=Math.sqrt(seg.reduce((s,v)=>s+(v-m)*(v-m),0)/n);up.push(+(m+k*sd).toFixed(2));dn.push(+(m-k*sd).toFixed(2));});return {mid:ma,up,dn};}
+function KDJ(hh,ll,c,n=9){let K=50,D=50;const Ka=[],Da=[],Ja=[];c.forEach((_,i)=>{if(i<n-1){Ka.push(null);Da.push(null);Ja.push(null);return;}
+  const h=Math.max(...hh.slice(i-n+1,i+1)),l=Math.min(...ll.slice(i-n+1,i+1)),rsv=h===l?50:(c[i]-l)/(h-l)*100;
+  K=2/3*K+1/3*rsv;D=2/3*D+1/3*K;Ka.push(+K.toFixed(2));Da.push(+D.toFixed(2));Ja.push(+(3*K-2*D).toFixed(2));});return {K:Ka,D:Da,J:Ja};}
+
+/* ============ 个股 AI 技术面分析(前端计算,按模板) ============ */
+function f2(x){return (x==null)?"—":(+x).toLocaleString(undefined,{maximumFractionDigits:2});}
+/* 分析措辞多样化:按代码稳定轮换,避免千篇一律 */
+function _hash(s){var x=0;for(var i=0;i<s.length;i++)x=(x*31+s.charCodeAt(i))>>>0;return x;}
+function vpick(arr,seed){return arr[_hash(seed)%arr.length];}
+var A_CONCL={
+  add:[
+    ["多头排列、动能向上;纯技术视角偏多,以跟随趋势为主。","Bullish MA stack with upward momentum; technically constructive — follow the trend."],
+    ["均线多头发散、量价尚可;结构健康,回踩不破可续持。","MAs fanning out bullishly with decent volume; healthy structure, hold while pullbacks hold."],
+    ["站稳短期均线、重心上移;顺势思路为主,不轻易逆势。","Holding above short-term MAs with a rising base; stay with the trend, don't fade it."],
+    ["趋势与动能同向向上;偏强格局,回踩即是机会。","Trend and momentum both point up; a strong setup where pullbacks are opportunities."]],
+  holdOB:[
+    ["趋势仍向上但已超买、乖离过大,追高风险与回踩概率上升。","Still up but overbought and over-extended; chase-risk and pullback odds are rising."],
+    ["涨幅透支、短线过热;强势不改,但追高性价比偏低。","Gains are stretched and short-term hot; still strong, but chasing offers poor risk/reward."],
+    ["强势但拥挤,警惕高位放量滞涨与获利回吐。","Strong yet crowded; watch for high-volume stalling and profit-taking."]],
+  weak:[
+    ["空头排列、动能偏空;以防守为主,等企稳信号。","Bearish MA stack, weak momentum; stay defensive and wait for stabilization."],
+    ["均线空头、反弹乏力;重心下移,不宜盲目抄底。","Bearish MAs and feeble bounces; the base is sliding — don't bottom-fish blindly."],
+    ["趋势走弱、卖压占优;右侧未现,观望更稳妥。","Weakening trend with sellers in control; no right-side signal yet — waiting is safer."]],
+  neutral:[
+    ["趋势与动能分化,方向待选,等突破或回踩确认。","Trend and momentum diverge; direction is undecided — await a breakout or pullback."],
+    ["多空胶着、区间震荡;缺乏主线,以区间思路应对。","Bulls and bears in a standoff, range-bound; no clear driver — trade the range."],
+    ["信号中性、量能不足;方向未明,轻仓等变盘。","Neutral signals on light volume; direction unclear — stay light and wait."],
+    ["高抛低吸窗口,趋势未定;突破放量再跟。","A high-sell/low-buy window with trend undecided; follow only on a volume breakout."]]
+};
+var A_SUG={
+  add:[
+    ["趋势向上,回踩支撑不破可持有/逢回踩分批","Uptrend — hold while support holds, scale in on pullbacks"],
+    ["顺势持有,急拉不追、回踩均线再介入","Hold with the trend; don't chase spikes, add on pullbacks to the MA"],
+    ["回踩不破前低可加,跌破则止盈离场","Add if pullbacks hold the prior low; take profit if it breaks"]],
+  holdOB:[
+    ["高位不追、不空,已持有逢强减利","Don't chase or short at highs; trim into strength if holding"],
+    ["持仓者逢强分批止盈,空仓者等回踩再看","Holders trim into strength; flat traders wait for a pullback"],
+    ["不追高,等超买缓解、回踩均线再评估","Don't chase; reassess after overbought eases and price revisits the MA"]],
+  weak:[
+    ["趋势走弱,反弹至均线/阻力减仓为主","Weak trend — trim into bounces toward the MA/resistance"],
+    ["逢反弹减仓,不接下跌,等企稳信号","Sell into rallies, don't catch the drop, await stabilization"],
+    ["破位不接,右侧企稳放量再考虑","Don't buy the break; wait for a right-side volume base"]],
+  neutral:[
+    ["多空不明,观望或区间高抛低吸","Direction unclear — wait, or sell highs / buy lows in the range"],
+    ["区间操作,上沿减、下沿接,不追突破","Range-trade: trim at the top, buy at the bottom, don't chase breakouts"],
+    ["以观望为主,等突破确认再动","Mostly wait; act only on a confirmed breakout"]]
+};
+function tfill(pair,map){function f(s){return String(s).replace(/\{(\w+)\}/g,function(m,k){return map[k]!=null?map[k]:"";});}return [f(pair[0]),f(pair[1])];}
+var A_R0=[
+  ["趋势:现价{side}MA20({dm}%),MA20{cross}穿MA60 → {stack}","Trend: price {sideE} MA20 ({dm}%); MA20 {crossE} MA60 → {stackE}"],
+  ["均线:价{side}20日线({dm}%),中期均线呈{stack}","MAs: price {sideE} the 20-day ({dm}%); mid-term MAs form a {stackE}"],
+  ["结构:对MA20 乖离{dm}%({side}),20/60日线{stack}","Structure: {dm}% gap to MA20 ({sideE}); the 20/60-day MAs sit in a {stackE}"]
+];
+var A_R1=[
+  ["动能:MACD{macd}、RSI {rsi}({rst})","Momentum: MACD {macdE}, RSI {rsi} ({rstE})"],
+  ["量能:MACD呈{macd},RSI {rsi} 处{rst}区","Momentum: MACD is {macdE}, RSI {rsi} in the {rstE} zone"],
+  ["指标:MACD{macd}信号,RSI {rsi}({rst})","Indicators: MACD {macdE} signal, RSI {rsi} ({rstE})"]
+];
+var A_R2=[
+  ["位置:距6月高 -{oh}%、距6月低 +{ol}%{crowd}","Position: -{oh}% from the 6M high, +{ol}% from the 6M low{crowdE}"],
+  ["区间:回撤6月高 {oh}%、高于6月低 {ol}%{crowd}","Range: {oh}% off the 6M high, {ol}% above the 6M low{crowdE}"],
+  ["高低:距顶 -{oh}%、离底 +{ol}%{crowd}","Extremes: -{oh}% to the high, +{ol}% to the low{crowdE}"]
+];
+var A_HELD={
+  add:[["回踩 {s1} 不破续持/可加,跌破 {s1} 减仓","Hold or add while {s1} holds; trim if {s1} breaks"],
+       ["持有为主,回踩 {s1} 附近分批加,失守则减","Mainly hold; add near {s1} on dips, reduce if it's lost"]],
+  hold:[["上方逢强分批减,创新高不加仓,底仓续持","Trim into strength above, no adds at new highs, keep a core"],
+        ["高位分批止盈,保留底仓,不追高","Scale out at highs, keep a core, don't chase"]],
+  weak:[["反弹至 {res} / MA20 附近减仓,不抄底","Trim near {res} / MA20 on bounces; don't bottom-fish"],
+        ["逢反弹到 {res} 减仓,跌势不接","Sell into bounces toward {res}; don't catch the falling knife"]]
+};
+var A_UNHELD=[
+  ["不追高;回踩 {s1} 或 {s2} 企稳放量再分批;趋势带 ~{s2} 赔率较高","Don't chase; scale in once {s1} or {s2} stabilizes on volume; the ~{s2} band offers better odds"],
+  ["等回踩 {s1}/{s2} 企稳再介入;趋势带 ~{s2} 为较优区","Wait for {s1}/{s2} to stabilize before entering; the ~{s2} band is the preferred zone"],
+  ["空仓不急,{s2} 附近放量企稳是较优入场点","No rush if flat — a volume base near {s2} is a better entry"]
+];
+var A_STOP=[
+  ["收盘破 {s1} 减仓、破 {s2} 清投机仓","Close below {s1} → trim; below {s2} → exit the trading position"],
+  ["跌破 {s1} 先减,失守 {s2} 清仓离场","Break {s1} → reduce first; lose {s2} → exit entirely"]
+];
+var A_RISK_OB=["短期超买,警惕高位回踩与获利了结","Short-term overbought; beware a pullback and profit-taking"];
+var A_RISK2=[
+  ["留意大盘系统性回调与板块退潮","Watch for a broad-market pullback and sector rotation out"],
+  ["低流动性时滑点与假突破概率上升","In thin liquidity, slippage and false breakouts become more likely"],
+  ["临近财报/事件窗口,注意跳空风险","Near earnings/event windows, mind the gap risk"]
+];
+var A_RISK3=[
+  ["仅基于价格/量的技术信号,未含估值·财报·资金面","Price/volume signals only — excludes valuation, earnings, and flows"],
+  ["技术形态受指数系统性风险影响,不宜孤立看待","Chart patterns are subject to index-level risk; don't read them in isolation"],
+  ["历史区间非未来保证,极端行情下会失效","Past ranges don't guarantee the future and can break in extreme moves"]
+];
+function analyzeCard(h,meta){
+  const c=h.c,n=c.length;if(n<30)return "";
+  const px=(meta.price!=null)?meta.price:c[n-1];
+  const ma=k=>{const s=c.slice(Math.max(0,n-k));return s.reduce((a,b)=>a+b,0)/s.length;};
+  const ma20=ma(20),ma60=ma(60);
+  const rA=RSI(c,14),rsi=rA[rA.length-1];
+  const m=MACD(c),bull=m.dif[n-1]>m.dea[n-1];
+  const hh=Math.max(...h.h),ll=Math.min(...h.l);
+  const h20=Math.max(...h.h.slice(-20)),l20=Math.min(...h.l.slice(-20)),l60=Math.min(...h.l.slice(-60));
+  const dM=(px-ma20)/ma20*100;
+  const up=px>ma20&&ma20>ma60,dn=px<ma20&&ma20<ma60,ob=rsi!=null&&rsi>=72,os=rsi!=null&&rsi<=30,ext=dM>25;
+  const res=h20>px?h20:hh,sup1=l20<px?l20:ma20,sup2=l60;
+  const MID=L("中","Medium"),MH=L("中高","Med-High");
+  let rk,cat,conf;
+  if(up&&bull&&!ob){rk="add";cat="add";conf=dM>8?MH:MID;}
+  else if(up&&ob){rk="hold";cat="holdOB";conf=MH;}
+  else if(dn&&!bull){rk=os?"reduce":"avoid";cat="weak";conf=MID;}
+  else{rk="hold";cat="neutral";conf=MID;}
+  var _seed=String(meta.code||"")+String(meta.name||"")+String(meta.market||"")+cat;
+  var concl=L.apply(null,vpick(A_CONCL[cat],_seed));
+  var sug=L.apply(null,vpick(A_SUG[cat],_seed));
+  const rating=L({add:"增持",hold:"持有",reduce:"减持",avoid:"回避"}[rk],{add:"Accumulate",hold:"Hold",reduce:"Reduce",avoid:"Avoid"}[rk]);
+  const rcol=(rk==="add")?UP:((rk==="reduce"||rk==="avoid")?DOWN:"#f5a623");
+  const S=L("强","Strong"),M2=L("中","Med"),WM=L("弱-中","Weak-Med"),MS=L("中-强","Med-Strong");
+  var _tok={side:px>=ma20?"站上":"跌破",sideE:px>=ma20?"above":"below",
+    dm:(dM>=0?"+":"")+dM.toFixed(1),cross:ma20>=ma60?"上":"下",crossE:ma20>=ma60?"above":"below",
+    stack:ma20>=ma60?"多头排列":"空头排列",stackE:ma20>=ma60?"bullish stack":"bearish stack",
+    macd:bull?"多头":"空头",macdE:bull?"bull":"bear",rsi:(rsi!=null?rsi.toFixed(0):"—"),
+    rst:ob?"超买":os?"超卖":"中性",rstE:ob?"overbought":os?"oversold":"neutral",
+    oh:((hh-px)/hh*100).toFixed(1),ol:((px-ll)/ll*100).toFixed(1),
+    crowd:ext?",乖离偏大、偏拥挤":",位置适中",crowdE:ext?", over-extended/crowded":", mid-range",
+    s1:f2(sup1),s2:f2(sup2),res:f2(res)};
+  const reasons=[
+    [L.apply(null,tfill(vpick(A_R0,_seed+"r0"),_tok)),(up||dn)?S:M2],
+    [L.apply(null,tfill(vpick(A_R1,_seed+"r1"),_tok)),(ob||os)?MS:M2],
+    [L.apply(null,tfill(vpick(A_R2,_seed+"r2"),_tok)),ext?M2:WM]
+  ];
+  var _heldCat=rk==="add"?"add":(rk==="hold"?"hold":"weak");
+  const held=L.apply(null,tfill(vpick(A_HELD[_heldCat],_seed+"h"),_tok));
+  const unheld=L.apply(null,tfill(vpick(A_UNHELD,_seed+"u"),_tok));
+  const stop=L.apply(null,tfill(vpick(A_STOP,_seed+"st"),_tok));
+  const risks=[
+    L("技术面:收盘跌破 ","Technical: a close below ")+f2(sup1)+L(" 转弱(触发:破位即减仓)"," turns it weak (trigger: trim on break)"),
+    ob?L.apply(null,A_RISK_OB):L.apply(null,vpick(A_RISK2,_seed+"rk2")),
+    L.apply(null,vpick(A_RISK3,_seed+"rk3"))
+  ];
+  const upd=meta.market==="US"?(DATA.meta||{}).updated_us:(DATA.meta||{}).updated_cn;
+  const stamp=(upd?new Date(upd).toLocaleString(locale()):"")+(meta.market==="US"?L(" · 美东参考"," · US Eastern"):L(" · 北京时间"," · Beijing time"));
+  let H="<div class='analysis'>";
+  H+="<div class='ahdr'>📊 "+(meta.name||"")+" "+(meta.code||"")+"｜"+L("评级","Rating")+" <b style='color:"+rcol+"'>"+rating+"</b>("+conf+L("信心","")+")｜"+L("建议:","Action: ")+sug+" <span class='ast'>· "+stamp+"</span></div>";
+  H+="<div class='asec'><span class='atag'>"+L("结论","Verdict")+"</span>"+concl+"</div>";
+  H+="<div class='asec'><span class='atag'>"+L("核心理由","Key reasons")+"</span><ul>"+reasons.map(r=>"<li>"+r[0]+" <em>("+r[1]+")</em></li>").join("")+"</ul></div>";
+  H+="<div class='asec'><span class='atag'>"+L("交易计划","Trade plan")+"</span><ul><li><b>"+L("已持有:","If holding: ")+"</b>"+held+"</li><li><b>"+L("未持有:","If flat: ")+"</b>"+unheld+"</li><li><b>"+L("止损:","Stop: ")+"</b>"+stop+"</li></ul></div>";
+  H+="<div class='asec'><span class='atag'>"+L("关键位","Key levels")+"</span>"+L("现价 ","Price ")+"<b>"+f2(px)+"</b>｜"+L("阻力 ","Resistance ")+f2(res)+"｜"+L("支撑 ","Support ")+f2(sup1)+" / "+f2(sup2)+"</div>";
+  H+="<div class='asec'><span class='atag'>"+L("风险","Risks")+"</span><ul>"+risks.map(r=>"<li>"+r+"</li>").join("")+"</ul></div>";
+  H+="<div class='adata'>"+L("【数据】技术面(价/量/MA/MACD/RSI/BOLL/区间高低)完整;估值/目标价/财报/资金/做空 未接入(免费技术面版)","[Data] Technicals complete (price/volume/MA/MACD/RSI/BOLL/range); valuation/target/earnings/flows/short interest not included (free technical version)")+"</div>";
+  H+="<div class='adisc'>⚠ "+L("AI 技术面参考,不构成投资建议","AI technical reference — not investment advice")+"</div></div>";
+  return H;
+}
+
+/* ============ 详情页 ============ */
+async function renderDetail(sym){
+  let h=(DATA.history||{})[sym];const isIdx=!!(DATA.indices||{})[sym];
+  if(!h&&DATA._preview){h=genHist(sym);DATA.history[sym]=h;}
+  const el=document.getElementById("detailMain");
+  // 单文件:个股历史不预载,进详情页时按需拉取
+  if(!h&&!DATA._preview){
+    el.innerHTML="<div class='backbar'><button class='backbtn' onclick=\"location.hash='#/'\">← "+L("返回","Back")+"</button></div><div class='empty'>"+L("正在加载 ","Loading ")+sym+" …</div>";
+    try{const r=await fetch("/api/stock?sym="+encodeURIComponent(sym),{cache:"no-store"});
+      const d=await r.json();
+      if(d&&d.history&&d.history.c&&d.history.c.length>2){h=d.history;DATA.history[sym]=h;
+        if(DATA.tickers[sym]&&d.price!=null){DATA.tickers[sym].price=d.price;DATA.tickers[sym].prev=d.prev;DATA.tickers[sym].pct=d.pct;}}
+    }catch(e){}
+    if(location.hash.indexOf("#/d/")!==0)return; // 用户已离开
+  }
+  const meta=isIdx?{name:DATA.indices[sym].name,en:DATA.indices[sym].en,market:DATA.indices[sym].market,kind:"index"}:(DATA.tickers||{})[sym]||(UNI[sym]||{});
+  const u=UNI[sym]||{};
+  if(!h){el.innerHTML="<div class='backbar'><button class='backbtn' onclick=\"location.hash='#/'\">← "+L("返回","Back")+"</button></div><div class='empty'>"+L("该标的暂无历史数据(可能未被数据源覆盖)。","No history for this instrument (may not be covered by the data source).")+"</div>";return;}
+  const last=(meta.price!=null)?meta.price:h.c[h.c.length-1];
+  const prev=(meta.prev!=null)?meta.prev:h.c[h.c.length-2];
+  const pc=(meta.pct!=null)?meta.pct:(prev?(last-prev)/prev*100:0);
+  const hi=Math.max(...h.h),lo=Math.min(...h.l);
+  const amp=prev?((h.h[h.h.length-1]-h.l[h.l.length-1])/prev*100):0;
+  const mname=(LANG==="en"&&meta.en)?meta.en:(meta.name||sym),men=(LANG==="en")?"":(meta.en||"");
+  const mk_=meta.market==="CN"?L("A股","A-Shares"):(meta.market==="US"?L("美股","US"):L("指数","Index"));
+  let html="<div class='backbar'><button class='backbtn' onclick=\"location.hash='#/'\">← "+L("返回总览 Back","Back to overview")+"</button>";
+  html+="<span class='mtag m-"+(meta.market||"US")+"'>"+mk_+(meta.kind==="etf"?" · ETF":"")+"</span>"+(meta._adhoc?"<span class='mtag' style='background:#3a2f10;color:#f5c26b'>"+L("现场查询 · 不在库","Live lookup · not in library")+"</span>":"")+"</div>";
+  html+="<div class='dhead'><div><div class='dn'>"+mname+(men?" <span class='den'>"+men+"</span>":"")+"</div><div class='den'>"+(isIdx?sym:(meta.code||""))+"</div></div>";
+  html+="<div><div class='dp' style='color:"+col(pc)+"'>"+last.toLocaleString()+"</div><div class='dc' style='color:"+col(pc)+"'>"+fmtp(pc)+"</div></div></div>";
+  // 指标信号
+  const sig=computeSignals(h);
+  html+="<div class='stats'>";
+  [[L("最新价","Last"),last.toLocaleString()],[L("涨跌幅","Change"),fmtp(pc)],[L("区间高(6月)","6M High"),hi.toLocaleString()],[L("区间低(6月)","6M Low"),lo.toLocaleString()],
+   [L("振幅","Amplitude"),amp.toFixed(2)+"%"],["MA20",sig.ma20!=null?sig.ma20.toFixed(2):"—"],["RSI(14)",sig.rsi!=null?sig.rsi.toFixed(1):"—"],[L("数据范围","Range"),h.d[0]+"~"+h.d[h.d.length-1]]]
+   .forEach(([l,v])=>html+="<div class='stat'><div class='l'>"+l+"</div><div class='v'>"+v+"</div></div>");
+  html+="</div>";
+  // AI 技术面分析(个股,按模板)
+  if(!isIdx) html+=analyzeCard(h,meta);
+  // 技术信号解读
+  html+="<div class='panel full' style='margin-bottom:13px'><div class='pt'>"+L("技术指标解读 Signals","Technical Signals")+" <span class='ps'>"+sig.good+L(" 看好 / "," bullish / ")+sig.bad+L(" 看淡(基于价格序列计算)"," bearish (from price series)")+"</span></div><div class='inds'>"+sig.chips+"</div></div>";
+  // 图表
+  html+="<div class='charts'>";
+  html+="<div class='panel full'><div class='pt'>"+L("K 线 + 均线 + 成交量 + MACD","Candles + MAs + Volume + MACD")+"</div><div id='d_main' class='chart' style='height:480px'></div></div>";
+  html+="<div class='panel'><div class='pt'>"+L("BOLL 布林带","Bollinger Bands")+"</div><div id='d_boll' class='chart' style='height:260px'></div></div>";
+  html+="<div class='panel'><div class='pt'>RSI(6/12/24)</div><div id='d_rsi' class='chart' style='height:260px'></div></div>";
+  html+="<div class='panel'><div class='pt'>KDJ(9,3,3)</div><div id='d_kdj' class='chart' style='height:260px'></div></div>";
+  html+="<div class='panel'><div class='pt'>"+L("成交量 Volume","Volume")+"</div><div id='d_vol' class='chart' style='height:260px'></div></div>";
+  html+="</div>";
+  // 简介
+  if(!isIdx){
+    const trackDisp=LANG==="en"?(u.track_en||(u.tracks||[]).map(TRK).join(", ")):((u.tracks||[]).join("、")+(u.track_en?"（"+u.track_en+"）":""));
+    html+="<div class='panel full' style='margin-top:13px'><div class='pt'>"+L("公司 / 赛道简介 Profile","Company / Sector Profile")+"</div><div class='profile'>";
+    html+="<div class='row'><span class='k'>"+L("名称","Name")+"</span><span>"+mname+(men?" / "+men:"")+"</span></div>";
+    html+="<div class='row'><span class='k'>"+L("所属赛道","Track")+"</span><span>"+trackDisp+"</span></div>";
+    html+="<div class='row'><span class='k'>"+L("产业环节","Chain layer")+"</span><span>"+(LANG==="en"?(u.layer_en||u.layer||"—"):(u.layer||"—"))+"</span></div>";
+    html+="<div class='row'><span class='k'>"+L("市场","Market")+"</span><span>"+mk_+" · "+(meta.kind==="etf"?"ETF":L("个股","Stock"))+"</span></div>";
+    if(LANG==="en"?(u.desc_en||u.desc):u.desc)html+="<div class='row'><span class='k'>"+L("赛道定位","Positioning")+"</span><span>"+(LANG==="en"?(u.desc_en||u.desc):u.desc)+"</span></div>";
+    html+="</div><div class='disc'>"+L("＊免费数据版:公司层面的资金流向/筹码分布/深股通等需付费或中国特有数据源,此处提供行情、技术指标与赛道定位。非投资建议。","* Free-data version: fund flows / holder distribution / northbound data need paid or China-specific sources; this page provides quotes, technicals, and sector positioning. Not investment advice.")+"</div></div>";
+  }
+  el.innerHTML=html;
+  drawDetailMain(h);drawBoll(h);drawRsi(h);drawKdj(h);drawVol(h);
+  setTimeout(()=>dcharts.forEach(c=>{try{c.resize();}catch(e){}}),50);
+}
+function computeSignals(h){
+  const c=h.c,ma=MA(c,20),m=MACD(c),rsi=RSI(c,14),b=BOLL(c),i=c.length-1;
+  const chips=[];let good=0,bad=0;
+  function add(label,val,cls){chips.push("<span class='indchip'>"+label+" <b class='"+cls+"'>"+val+"</b></span>");if(cls==="good")good++;if(cls==="bad")bad++;}
+  if(rsi[i]!=null){const r=rsi[i];add("RSI",r.toFixed(0)+(r>70?L(" 超买"," OB"):r<30?L(" 超卖"," OS"):""),r>70?"bad":r<30?"good":"neu");}
+  if(m.dif[i]!=null){const bull=m.dif[i]>m.dea[i];add("MACD",bull?L("多头","Bull"):L("空头","Bear"),bull?"good":"bad");}
+  if(ma[i]!=null)add("MA20",c[i]>=ma[i]?L("价在上方","Above"):L("价在下方","Below"),c[i]>=ma[i]?"good":"bad");
+  if(b.up[i]!=null){const pos=c[i]>b.up[i]?L("触上轨","Upper"):c[i]<b.dn[i]?L("触下轨","Lower"):L("通道内","Mid");add("BOLL",pos,pos===L("触上轨","Upper")?"bad":pos===L("触下轨","Lower")?"good":"neu");}
+  return {chips:chips.join(""),good,bad,ma20:ma[i],rsi:rsi[i]};
+}
+function dgrid(id){return mk(id,dcharts);}
+function drawDetailMain(h){const c=dgrid("d_main");if(!c)return;const close=h.c;
+  const kd=close.map((_,i)=>[h.o[i],h.c[i],h.l[i],h.h[i]]);
+  const ma5=MA(close,5),ma10=MA(close,10),ma20=MA(close,20),ma60=MA(close,60),m=MACD(close);
+  const volColors=close.map((_,i)=>h.c[i]>=h.o[i]?UP:DOWN);
+  c.setOption({...base,tooltip:{trigger:"axis",axisPointer:{type:"cross"}},legend:{top:0,textStyle:{color:TXT},data:["MA5","MA10","MA20","MA60"]},
+    axisPointer:{link:[{xAxisIndex:"all"}]},
+    grid:[{left:50,right:16,top:26,height:"50%"},{left:50,right:16,top:"64%",height:"13%"},{left:50,right:16,top:"81%",height:"14%"}],
+    xAxis:[{type:"category",data:h.d,axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},
+           {type:"category",gridIndex:1,data:h.d,axisLabel:{show:false}},{type:"category",gridIndex:2,data:h.d,axisLabel:{show:false}}],
+    yAxis:[{scale:true,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},
+           {gridIndex:1,splitLine:{show:false},axisLabel:{show:false}},{gridIndex:2,splitLine:{show:false},axisLabel:{show:false}}],
+    dataZoom:[{type:"inside",xAxisIndex:[0,1,2],start:50,end:100},{type:"slider",xAxisIndex:[0,1,2],bottom:2,height:13,start:50,end:100,borderColor:GRID,textStyle:{color:TXT}}],
+    series:[{type:"candlestick",data:kd,itemStyle:{color:UP,color0:DOWN,borderColor:UP,borderColor0:DOWN}},
+      {name:"MA5",type:"line",data:ma5,showSymbol:false,lineStyle:{width:1,color:"#f5a623"}},
+      {name:"MA10",type:"line",data:ma10,showSymbol:false,lineStyle:{width:1,color:"#6fb0ff"}},
+      {name:"MA20",type:"line",data:ma20,showSymbol:false,lineStyle:{width:1,color:"#ff8aa0"}},
+      {name:"MA60",type:"line",data:ma60,showSymbol:false,lineStyle:{width:1,color:"#7ee0bf"}},
+      {type:"bar",xAxisIndex:1,yAxisIndex:1,data:h.v.map((v,i)=>({value:v,itemStyle:{color:volColors[i]}}))},
+      {name:"DIF",type:"line",xAxisIndex:2,yAxisIndex:2,data:m.dif,showSymbol:false,lineStyle:{width:1,color:"#f5a623"}},
+      {name:"DEA",type:"line",xAxisIndex:2,yAxisIndex:2,data:m.dea,showSymbol:false,lineStyle:{width:1,color:"#6fb0ff"}},
+      {name:"MACD",type:"bar",xAxisIndex:2,yAxisIndex:2,data:m.macd.map(v=>({value:v,itemStyle:{color:v>=0?UP:DOWN}}))}]});
+}
+function drawBoll(h){const c=dgrid("d_boll");if(!c)return;const b=BOLL(h.c);
+  c.setOption({...base,tooltip:{trigger:"axis"},legend:{top:0,textStyle:{color:TXT}},grid:{left:48,right:14,top:24,bottom:22},
+    xAxis:{type:"category",data:h.d,axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},yAxis:{scale:true,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},
+    series:[{name:L("收盘","Close"),type:"line",data:h.c,showSymbol:false,lineStyle:{width:1.4,color:"#e6ebf5"}},
+      {name:"UP",type:"line",data:b.up,showSymbol:false,lineStyle:{width:1,color:UP}},
+      {name:"MID",type:"line",data:b.mid,showSymbol:false,lineStyle:{width:1,color:"#f5a623"}},
+      {name:"DN",type:"line",data:b.dn,showSymbol:false,lineStyle:{width:1,color:DOWN}}]});
+}
+function drawRsi(h){const c=dgrid("d_rsi");if(!c)return;
+  c.setOption({...base,tooltip:{trigger:"axis"},legend:{top:0,textStyle:{color:TXT}},grid:{left:40,right:14,top:24,bottom:22},
+    xAxis:{type:"category",data:h.d,axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},yAxis:{min:0,max:100,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},
+    series:[{name:"RSI6",type:"line",data:RSI(h.c,6),showSymbol:false,lineStyle:{width:1,color:"#f5a623"}},
+      {name:"RSI12",type:"line",data:RSI(h.c,12),showSymbol:false,lineStyle:{width:1,color:"#6fb0ff"}},
+      {name:"RSI24",type:"line",data:RSI(h.c,24),showSymbol:false,lineStyle:{width:1,color:"#ff8aa0"}}]});
+}
+function drawKdj(h){const c=dgrid("d_kdj");if(!c)return;const k=KDJ(h.h,h.l,h.c);
+  c.setOption({...base,tooltip:{trigger:"axis"},legend:{top:0,textStyle:{color:TXT}},grid:{left:40,right:14,top:24,bottom:22},
+    xAxis:{type:"category",data:h.d,axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},yAxis:{scale:true,splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},
+    series:[{name:"K",type:"line",data:k.K,showSymbol:false,lineStyle:{width:1,color:"#f5a623"}},
+      {name:"D",type:"line",data:k.D,showSymbol:false,lineStyle:{width:1,color:"#6fb0ff"}},
+      {name:"J",type:"line",data:k.J,showSymbol:false,lineStyle:{width:1,color:"#ff8aa0"}}]});
+}
+function drawVol(h){const c=dgrid("d_vol");if(!c)return;const cols=h.c.map((_,i)=>h.c[i]>=h.o[i]?UP:DOWN);
+  c.setOption({...base,tooltip:{trigger:"axis"},grid:{left:54,right:14,top:14,bottom:22},
+    xAxis:{type:"category",data:h.d,axisLabel:{color:TXT},axisLine:{lineStyle:{color:AX}}},yAxis:{splitLine:{lineStyle:{color:GRID}},axisLabel:{color:TXT}},
+    series:[{type:"bar",data:h.v.map((v,i)=>({value:v,itemStyle:{color:cols[i]}}))}]});
+}
+
+document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.remove("on"));
+  b.classList.add("on");document.getElementById(b.dataset.s).classList.add("on");
+  setTimeout(()=>charts.forEach(c=>{try{c.resize();}catch(e){}}),60);});
+window.addEventListener("resize",()=>{charts.concat(dcharts).forEach(c=>{try{c.resize();}catch(e){}});});
+
+/* ECharts 多源加载:国内可达 CDN 优先,jsdelivr/cdnjs 兜底,每源 4s 超时跳下一个 */
+function loadEcharts(cb){
+  if(typeof echarts!=="undefined"){cb();return;}
+  var urls=["https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js",
+            "https://lib.baomitu.com/echarts/5.5.0/echarts.min.js",
+            "https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js",
+            "https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"];
+  var i=0,done=false;
+  function finish(){if(done)return;done=true;cb();}
+  function next(){
+    if(done)return;
+    if(i>=urls.length){finish();return;}
+    var s=document.createElement("script");s.src=urls[i++];
+    var t=setTimeout(function(){s.onload=s.onerror=null;next();},4000);
+    s.onload=function(){clearTimeout(t);if(typeof echarts!=="undefined")finish();else next();};
+    s.onerror=function(){clearTimeout(t);next();};
+    document.head.appendChild(s);
+  }
+  next();
+}
+(function(){
+  /* 语言:未选过则弹遮罩;选过直接用 */
+  var chosen=false;try{chosen=!!localStorage.getItem("lang");}catch(e){}
+  var mask=document.getElementById("langmask");
+  function pickLang(lg){LANG=(lg==="en")?"en":"zh";try{localStorage.setItem("lang",LANG);}catch(e){}
+    if(mask)mask.style.display="none";applyLangAndRender();}
+  if(mask){mask.querySelectorAll(".lbtn").forEach(function(b){b.onclick=function(){pickLang(b.dataset.lang);};});
+    if(!chosen)mask.style.display="flex";}
+  var lt=document.getElementById("langtoggle");
+  if(lt)lt.onclick=function(){LANG=(LANG==="en")?"zh":"en";try{localStorage.setItem("lang",LANG);}catch(e){}applyLangAndRender();};
+  applyStaticLang();
+  var cb=document.getElementById("cmode");if(cb){cb.textContent=cmodeLabel();cb.onclick=function(){setColorMode(!GREENUP);};}
+  var rb=document.getElementById("refreshBtn");if(rb){rb.onclick=async function(){if(rb.disabled)return;rb.disabled=true;var o=rb.textContent;rb.textContent="🔄 刷新中…";try{await liveQuotes();}catch(e){}rb.textContent=o;rb.disabled=false;};}
+  function showRank(){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.s==="rank"));document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="rank"));}
+  var gs=document.getElementById("gsearch");
+  if(gs){gs.oninput=function(){if(location.hash.indexOf("#/d/")===0)location.hash="#/";if(gs.value.trim()&&!document.getElementById("rank").classList.contains("on"))showRank();try{drawRT();}catch(e){}};
+    gs.onkeydown=function(e){if(e.key==="Enter"){showRank();try{drawRT();}catch(e2){}}};}})();
+loadEcharts(load);
+</script>
+</body>
+</html>
