@@ -35,27 +35,28 @@ function normSym(s) {
   return s.toUpperCase();
 }
 
-// 美股:Tiingo 日线历史 + IEX 最新价
-async function usStock(sym, env) {
-  const token = env.TIINGO_TOKEN;
-  if (!token) throw "TIINGO_TOKEN 未配置";
-  const start = new Date(Date.now() - 200 * 864e5).toISOString().slice(0, 10);
-  const r = await fetch(`https://api.tiingo.com/tiingo/daily/${sym}/prices?startDate=${start}&token=${token}`,
-    { headers: { "Content-Type": "application/json" } });
-  const arr = await r.json();
-  if (!Array.isArray(arr) || !arr.length) throw "无历史数据";
-  const rows = arr.slice(-130);
+// 美股:雅虎 chart 日线历史 + 现价(免费,无需 key)
+async function usStock(sym) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=6mo&interval=1d`;
+  const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } });
+  const j = await r.json();
+  const res = j && j.chart && j.chart.result && j.chart.result[0];
+  if (!res || !res.timestamp || !res.indicators || !res.indicators.quote) throw "无历史数据";
+  const q = res.indicators.quote[0], ts = res.timestamp;
   const H = { d: [], o: [], h: [], l: [], c: [], v: [] };
-  for (const x of rows) {
-    H.d.push(String(x.date).slice(5, 10)); H.o.push(r2(x.open)); H.h.push(r2(x.high));
-    H.l.push(r2(x.low)); H.c.push(r2(x.close)); H.v.push(Math.round(x.volume || 0));
+  for (let i = 0; i < ts.length; i++) {
+    if (q.close[i] == null) continue;
+    const dt = new Date(ts[i] * 1000);
+    H.d.push(String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"));
+    H.o.push(r2(q.open[i])); H.h.push(r2(q.high[i])); H.l.push(r2(q.low[i]));
+    H.c.push(r2(q.close[i])); H.v.push(Math.round(q.volume[i] || 0));
   }
-  let last = H.c[H.c.length - 1], prev = H.c[H.c.length - 2];
-  try {
-    const q = await (await fetch(`https://api.tiingo.com/iex/?tickers=${sym}&token=${token}`)).json();
-    if (q && q[0] && q[0].last != null) { last = r2(q[0].last); prev = r2(q[0].prevClose != null ? q[0].prevClose : prev); }
-  } catch (e) {}
-  return { sym, market: "US", name: sym, price: last, prev, pct: pct(last, prev), history: H };
+  if (H.c.length < 2) throw "无历史数据";
+  const n = H.c.length;
+  const meta = res.meta || {};
+  const last = r2(meta.regularMarketPrice != null ? meta.regularMarketPrice : H.c[n - 1]);
+  const prev = r2(meta.chartPreviousClose != null ? meta.chartPreviousClose : (meta.previousClose != null ? meta.previousClose : H.c[n - 2]));
+  return { sym, market: "US", name: meta.shortName || sym, price: last, prev, pct: pct(last, prev), history: H };
 }
 
 // A股:腾讯前复权日线(web.ifzq.gtimg.cn,Cloudflare 可达)。中文名以搜索结果为准。

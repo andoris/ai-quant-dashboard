@@ -1,26 +1,25 @@
-// Cloudflare Pages Function —— GET /api/quotes
-// 按需实时报价:用户打开/轮询时才调用;边缘缓存 ~20 秒(多人同看也只打数据源几次)。
-//
-// 环境变量(Cloudflare Pages → Settings → Environment variables 里加):
-//   TIINGO_TOKEN   —— 美股实时(Tiingo IEX),必填才有美股实时
-//   (A股走腾讯免费行情接口,无需 key)
-//   SYMBOLS_URL    —— 可选,标的清单来源,默认同源 /data.json
-//
+// Cloudflare Pages Function —— GET /api/quotes?symbols=NVDA,600519.SS,...
+// 单文件架构:标的清单由前端(index.html)传入,后端不再依赖 data.json。
+// 按需实时报价;边缘缓存 ~20 秒(多人同看/轮询也只打数据源几次)。
+//   美股/美股ETF → 雅虎行情(免费);A股/A股ETF → 腾讯行情(免费)。
 // 返回: { ts, count, quotes: { "<yf>": {price, prev, pct} , ... } }
 
-const EDGE_TTL = 20; // 秒:边缘缓存时长 = "实时"刷新粒度
+const EDGE_TTL = 20;
 
 export async function onRequestGet(context) {
-  const { request, env } = context;
-  const cache = caches.default;
-  const cacheKey = new Request(new URL("/api/quotes", request.url).toString(), { method: "GET" });
+  const { request } = context;
+  const url = new URL(request.url);
+  const raw = (url.searchParams.get("symbols") || "").trim();
+  if (!raw) return cors(jsonResp({ ts: Date.now(), count: 0, quotes: {} }, 200, 0));
 
+  const cache = caches.default;
+  const cacheKey = new Request(url.origin + "/api/quotes?symbols=" + encodeURIComponent(raw), { method: "GET" });
   const hit = await cache.match(cacheKey);
   if (hit) return cors(hit);
 
   let payload;
   try {
-    payload = await buildQuotes(request, env);
+    payload = await buildQuotes(raw);
   } catch (e) {
     return cors(jsonResp({ error: String(e), ts: Date.now(), quotes: {} }, 200, 0));
   }
@@ -29,53 +28,41 @@ export async function onRequestGet(context) {
   return cors(resp);
 }
 
-// CORS 预检
 export async function onRequestOptions() {
   return cors(new Response(null, { status: 204 }));
 }
 
-async function buildQuotes(request, env) {
-  const { us, cn } = await getUniverse(request, env);
+async function buildQuotes(raw) {
+  const syms = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  const us = [], cn = [], seen = new Set();
+  for (const s of syms) {
+    if (seen.has(s)) continue;
+    seen.add(s);
+    if (/\.(SS|SZ|BJ)$/.test(s)) cn.push(s);
+    else us.push(s);
+  }
   const quotes = {};
-  await Promise.all([fetchTiingo(us, env, quotes), fetchTencentCN(cn, quotes)]);
+  await Promise.all([fetchYahooUS(us, quotes), fetchTencentCN(cn, quotes)]);
   return { ts: Date.now(), count: Object.keys(quotes).length, quotes };
 }
 
-// 从已部署的 data.json 读取标的清单(缓存 1 小时)
-async function getUniverse(request, env) {
-  const origin = new URL(request.url).origin;
-  const url = env.SYMBOLS_URL || `${origin}/data.json`;
-  const r = await fetch(url, { cf: { cacheTtl: 3600, cacheEverything: true } });
-  const d = await r.json();
-  const us = [], cn = [], seen = new Set();
-  for (const x of (d.universe || [])) {
-    if (x.kind !== "stock" && x.kind !== "etf") continue;
-    if (seen.has(x.yf)) continue;
-    seen.add(x.yf);
-    if (x.market === "US") us.push(x.yf);
-    else if (x.market === "CN") cn.push(x.yf);
-  }
-  return { us, cn };
-}
-
-// 美股 / 美股ETF —— Tiingo IEX 批量(一次多只)
-async function fetchTiingo(syms, env, out) {
-  const token = env.TIINGO_TOKEN;
-  if (!token || !syms.length) return;
-  const CH = 90;
+// 美股 / 美股ETF —— 雅虎行情批量(免费,无需 key;一次多只)
+async function fetchYahooUS(syms, out) {
+  if (!syms.length) return;
+  const CH = 50;
   const jobs = [];
   for (let i = 0; i < syms.length; i += CH) {
     const batch = syms.slice(i, i + CH);
-    const url = `https://api.tiingo.com/iex/?tickers=${batch.join(",")}&token=${token}`;
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${batch.join(",")}`;
     jobs.push(
-      fetch(url, { headers: { "Content-Type": "application/json" } })
-        .then((r) => (r.ok ? r.json() : []))
-        .then((arr) => {
-          for (const q of arr || []) {
-            const last = q.last ?? q.tngoLast ?? q.lastSalePrice;
-            const prev = q.prevClose;
-            if (last == null || prev == null || !q.ticker) continue;
-            out[q.ticker.toUpperCase()] = { price: r2(last), prev: r2(prev), pct: pct(last, prev) };
+      fetch(url, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          const arr = (j && j.quoteResponse && j.quoteResponse.result) || [];
+          for (const q of arr) {
+            const last = q.regularMarketPrice, prev = q.regularMarketPreviousClose;
+            if (last == null || prev == null || !q.symbol) continue;
+            out[String(q.symbol).toUpperCase()] = { price: r2(last), prev: r2(prev), pct: pct(last, prev) };
           }
         })
         .catch(() => {})
@@ -103,7 +90,7 @@ async function fetchTencentCN(syms, out) {
     const url = `https://qt.gtimg.cn/q=${batch.join(",")}`;
     jobs.push(
       fetch(url)
-        .then((r) => r.text()) // 数字字段为 ASCII,GBK 中文乱码不影响解析
+        .then((r) => r.text())
         .then((txt) => {
           for (const line of txt.split("\n")) {
             const mm = line.match(/v_(\w+)="([^"]*)"/);
